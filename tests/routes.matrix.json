@@ -1,0 +1,398 @@
+[
+	{
+		"method": "DELETE",
+		"path": "/v1/apps/:id"
+	},
+	{
+		"method": "DELETE",
+		"path": "/v1/apps/:id/deploys/webhook"
+	},
+	{
+		"method": "DELETE",
+		"path": "/v1/apps/:id/envs/:envId"
+	},
+	{
+		"method": "DELETE",
+		"path": "/v1/apps/:id/files"
+	},
+	{
+		"method": "DELETE",
+		"path": "/v1/apps/:id/network/custom"
+	},
+	{
+		"method": "DELETE",
+		"path": "/v1/apps/:id/network/publish"
+	},
+	{
+		"method": "DELETE",
+		"path": "/v1/databases/:id"
+	},
+	{
+		"method": "DELETE",
+		"path": "/v1/users/me/resource-organization/favorites/:resource_type/:resource_id"
+	},
+	{
+		"method": "DELETE",
+		"path": "/v1/users/me/resource-organization/folders/:folder_id"
+	},
+	{
+		"method": "DELETE",
+		"path": "/v1/users/me/resource-organization/folders/:folder_id/resources/:resource_type/:resource_id"
+	},
+	{
+		"method": "DELETE",
+		"path": "/v1/workspaces/:id"
+	},
+	{
+		"method": "DELETE",
+		"path": "/v1/workspaces/:id/apps/:app_id"
+	},
+	{
+		"method": "DELETE",
+		"path": "/v1/workspaces/:id/databases/:db_id"
+	},
+	{
+		"method": "DELETE",
+		"path": "/v1/workspaces/:id/invites/:invite_id"
+	},
+	{
+		"method": "DELETE",
+		"path": "/v1/workspaces/:id/members/:user_id"
+	},
+	{
+		"method": "DELETE",
+		"path": "/v1/workspaces/:id/resource-organization/favorites/:resource_type/:resource_id"
+	},
+	{
+		"method": "DELETE",
+		"path": "/v1/workspaces/:id/resource-organization/folders/:folder_id"
+	},
+	{
+		"method": "DELETE",
+		"path": "/v1/workspaces/:id/resource-organization/folders/:folder_id/resources/:resource_type/:resource_id"
+	},
+	{
+		"method": "DELETE",
+		"path": "/v1/workspaces/:id/roles/:role_id"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/apps/:id"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/apps/:id/deploys"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/apps/:id/deploys/webhook"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/apps/:id/download"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/apps/:id/envs"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/apps/:id/files"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/apps/:id/files/content"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/apps/:id/files/tree"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/apps/:id/logs"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/apps/:id/metrics"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/apps/:id/network/custom"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/apps/:id/network/dns"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/apps/:id/realtime"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/apps/:id/status"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/apps/runtimes"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/apps/status"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/databases/:id"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/databases/:id/credentials/certificate"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/databases/:id/metrics"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/databases/:id/status"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/databases/status"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/orders"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/orders/:orderId/status"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/users/:id/snapshots"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/users/:id/snapshots/:snapshot_id/download"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/users/me"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/users/me/sessions"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/users/snapshots"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/workspaces"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/workspaces/:id"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/workspaces/:id/action-requests"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/workspaces/:id/invites"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/workspaces/:id/members"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/workspaces/:id/roles"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/workspaces/invites/:token"
+	},
+	{
+		"method": "PATCH",
+		"path": "/v1/apps/:id/config"
+	},
+	{
+		"method": "PATCH",
+		"path": "/v1/apps/:id/files"
+	},
+	{
+		"method": "PATCH",
+		"path": "/v1/apps/:id/network/subdomain"
+	},
+	{
+		"method": "PATCH",
+		"path": "/v1/users/me"
+	},
+	{
+		"method": "PATCH",
+		"path": "/v1/users/me/resource-organization/folders/:folder_id"
+	},
+	{
+		"method": "PATCH",
+		"path": "/v1/workspaces/:id/resource-organization/folders/:folder_id"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/apps"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/apps/:id/deploys/webhook"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/apps/:id/envs"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/apps/:id/files/upload"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/apps/:id/network/custom"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/apps/:id/network/publish"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/apps/:id/network/purge-cache"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/apps/:id/restart"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/apps/:id/start"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/apps/:id/stop"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/databases"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/databases/:id/credentials/certificate/reset"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/databases/:id/credentials/reset"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/databases/:id/reset"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/databases/:id/start"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/databases/:id/stop"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/orders"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/orders/:orderId/initiate/pix"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/redeem/:code"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/users/:id/snapshots"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/users/:id/snapshots/:snapshot_id/restore"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/users/me/resource-organization/folders"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/workspaces"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/workspaces/:id/action-requests"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/workspaces/:id/apps/:app_id"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/workspaces/:id/databases/:db_id"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/workspaces/:id/resource-organization/folders"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/workspaces/:id/roles"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/workspaces/invites/:token/accept"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/workspaces/invites/:token/decline"
+	},
+	{
+		"method": "PUT",
+		"path": "/v1/apps/:id/files"
+	},
+	{
+		"method": "PUT",
+		"path": "/v1/databases/:id"
+	},
+	{
+		"method": "PUT",
+		"path": "/v1/users/me/resource-organization/favorites/:resource_type/:resource_id"
+	},
+	{
+		"method": "PUT",
+		"path": "/v1/users/me/resource-organization/folders/:folder_id/resources/:resource_type/:resource_id"
+	},
+	{
+		"method": "PUT",
+		"path": "/v1/workspaces/:id"
+	},
+	{
+		"method": "PUT",
+		"path": "/v1/workspaces/:id/members/:user_id"
+	},
+	{
+		"method": "PUT",
+		"path": "/v1/workspaces/:id/resource-organization/favorites/:resource_type/:resource_id"
+	},
+	{
+		"method": "PUT",
+		"path": "/v1/workspaces/:id/resource-organization/folders/:folder_id/resources/:resource_type/:resource_id"
+	},
+	{
+		"method": "PUT",
+		"path": "/v1/workspaces/:id/roles/:role_id"
+	}
+]
