@@ -7,7 +7,7 @@
 		"useIgnoreFile": false
 	},
 	"files": {
-		"ignore": ["dist/**", "node_modules/**"]
+		"ignore": ["dist/**", "node_modules/**", "package.json", ".release-please-manifest.json"]
 	},
 	"organizeImports": {
 		"enabled": true
