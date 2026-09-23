@@ -7,7 +7,7 @@ import { SnapshotsResource } from "./resources/snapshots.js";
 import { WorkspacesResource } from "./resources/workspaces.js";
 import { type SseEvent, parseSseStream } from "./sse.js";
 
-const PACKAGE_VERSION = "0.1.0"; // x-release-please-version
+const PACKAGE_VERSION = "0.1.1"; // x-release-please-version
 const DEFAULT_BASE_URL = "https://api.vertracloud.app";
 const DEFAULT_TIMEOUT_MS = 30_000;
 

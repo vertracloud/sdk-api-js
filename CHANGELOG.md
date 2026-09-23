@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.1](https://github.com/vertracloud/sdk-api-js/compare/v0.1.0...v0.1.1) (2026-09-23)
+
+
+### Bug Fixes
+
+* bump @vertracloud/api-types to 0.2.1 ([50bdadf](https://github.com/vertracloud/sdk-api-js/commit/50bdadfe78b8c8166d20938c3c191e9d34da23c3))
+* drop resource-organization segment from folder and favorite routes ([e21b8ca](https://github.com/vertracloud/sdk-api-js/commit/e21b8cafe09fa7ce4ae20198e1b5ce40b5db131b))
+* regenerate lockfile to drop stale cross-repo biome entry ([9ba2804](https://github.com/vertracloud/sdk-api-js/commit/9ba28041226c419929062e83ac8f68fcf41476a0))
+
 ## 0.1.0 (2026-09-23)
 
 
