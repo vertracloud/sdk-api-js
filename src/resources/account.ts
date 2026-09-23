@@ -26,8 +26,7 @@ export class AccountResource {
 
 	readonly folders = {
 		/** `POST /v1/users/me/folders` — scope `account:write`. */
-		create: (body: { name: string; color?: WorkspaceFolderColor; position?: number }, options?: { signal?: AbortSignal; timeoutMs?: number }): Promise<APIWorkspaceResourceFolder> =>
-			this.client.request({ method: "POST", path: "/v1/users/me/folders", body, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+		create: (body: { name: string; color?: WorkspaceFolderColor; position?: number }, options?: { signal?: AbortSignal; timeoutMs?: number }): Promise<APIWorkspaceResourceFolder> => this.client.request({ method: "POST", path: "/v1/users/me/folders", body, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
 		/** `PATCH /v1/users/me/folders/:folder_id` — scope `account:write`. */
 		update: (folderId: string, body: { name?: string; color?: WorkspaceFolderColor; position?: number }, options?: { signal?: AbortSignal; timeoutMs?: number }): Promise<APIWorkspaceResourceFolder> =>
