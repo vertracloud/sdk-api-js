@@ -29,15 +29,15 @@
 	},
 	{
 		"method": "DELETE",
-		"path": "/v1/users/me/resource-organization/favorites/:resource_type/:resource_id"
+		"path": "/v1/users/me/favorites/:resource_type/:resource_id"
 	},
 	{
 		"method": "DELETE",
-		"path": "/v1/users/me/resource-organization/folders/:folder_id"
+		"path": "/v1/users/me/folders/:folder_id"
 	},
 	{
 		"method": "DELETE",
-		"path": "/v1/users/me/resource-organization/folders/:folder_id/resources/:resource_type/:resource_id"
+		"path": "/v1/users/me/folders/:folder_id/resources/:resource_type/:resource_id"
 	},
 	{
 		"method": "DELETE",
@@ -61,15 +61,15 @@
 	},
 	{
 		"method": "DELETE",
-		"path": "/v1/workspaces/:id/resource-organization/favorites/:resource_type/:resource_id"
+		"path": "/v1/workspaces/:id/favorites/:resource_type/:resource_id"
 	},
 	{
 		"method": "DELETE",
-		"path": "/v1/workspaces/:id/resource-organization/folders/:folder_id"
+		"path": "/v1/workspaces/:id/folders/:folder_id"
 	},
 	{
 		"method": "DELETE",
-		"path": "/v1/workspaces/:id/resource-organization/folders/:folder_id/resources/:resource_type/:resource_id"
+		"path": "/v1/workspaces/:id/folders/:folder_id/resources/:resource_type/:resource_id"
 	},
 	{
 		"method": "DELETE",
@@ -233,11 +233,11 @@
 	},
 	{
 		"method": "PATCH",
-		"path": "/v1/users/me/resource-organization/folders/:folder_id"
+		"path": "/v1/users/me/folders/:folder_id"
 	},
 	{
 		"method": "PATCH",
-		"path": "/v1/workspaces/:id/resource-organization/folders/:folder_id"
+		"path": "/v1/workspaces/:id/folders/:folder_id"
 	},
 	{
 		"method": "POST",
@@ -325,7 +325,7 @@
 	},
 	{
 		"method": "POST",
-		"path": "/v1/users/me/resource-organization/folders"
+		"path": "/v1/users/me/folders"
 	},
 	{
 		"method": "POST",
@@ -345,7 +345,7 @@
 	},
 	{
 		"method": "POST",
-		"path": "/v1/workspaces/:id/resource-organization/folders"
+		"path": "/v1/workspaces/:id/folders"
 	},
 	{
 		"method": "POST",
@@ -369,11 +369,11 @@
 	},
 	{
 		"method": "PUT",
-		"path": "/v1/users/me/resource-organization/favorites/:resource_type/:resource_id"
+		"path": "/v1/users/me/favorites/:resource_type/:resource_id"
 	},
 	{
 		"method": "PUT",
-		"path": "/v1/users/me/resource-organization/folders/:folder_id/resources/:resource_type/:resource_id"
+		"path": "/v1/users/me/folders/:folder_id/resources/:resource_type/:resource_id"
 	},
 	{
 		"method": "PUT",
@@ -385,11 +385,11 @@
 	},
 	{
 		"method": "PUT",
-		"path": "/v1/workspaces/:id/resource-organization/favorites/:resource_type/:resource_id"
+		"path": "/v1/workspaces/:id/favorites/:resource_type/:resource_id"
 	},
 	{
 		"method": "PUT",
-		"path": "/v1/workspaces/:id/resource-organization/folders/:folder_id/resources/:resource_type/:resource_id"
+		"path": "/v1/workspaces/:id/folders/:folder_id/resources/:resource_type/:resource_id"
 	},
 	{
 		"method": "PUT",

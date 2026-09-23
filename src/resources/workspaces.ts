@@ -122,53 +122,53 @@ export class WorkspacesResource {
 	};
 
 	readonly folders = {
-		/** `POST /v1/workspaces/:id/resource-organization/folders` — scope `workspaces:write`. */
+		/** `POST /v1/workspaces/:id/folders` — scope `workspaces:write`. */
 		create: (workspaceId: string, body: { name: string; color?: WorkspaceFolderColor; position?: number }, options?: Opts): Promise<APIWorkspaceResourceFolder> =>
-			this.client.request({ method: "POST", path: `/v1/workspaces/${encodePathSegment(workspaceId)}/resource-organization/folders`, body, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+			this.client.request({ method: "POST", path: `/v1/workspaces/${encodePathSegment(workspaceId)}/folders`, body, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
-		/** `PATCH /v1/workspaces/:id/resource-organization/folders/:folder_id` — scope `workspaces:write`. */
+		/** `PATCH /v1/workspaces/:id/folders/:folder_id` — scope `workspaces:write`. */
 		update: (workspaceId: string, folderId: string, body: { name?: string; color?: WorkspaceFolderColor; position?: number }, options?: Opts): Promise<APIWorkspaceResourceFolder> =>
-			this.client.request({ method: "PATCH", path: `/v1/workspaces/${encodePathSegment(workspaceId)}/resource-organization/folders/${encodePathSegment(folderId)}`, body, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+			this.client.request({ method: "PATCH", path: `/v1/workspaces/${encodePathSegment(workspaceId)}/folders/${encodePathSegment(folderId)}`, body, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
-		/** `DELETE /v1/workspaces/:id/resource-organization/folders/:folder_id` — scope `workspaces:write`. */
-		delete: (workspaceId: string, folderId: string, options?: Opts): Promise<void> => this.client.request({ method: "DELETE", path: `/v1/workspaces/${encodePathSegment(workspaceId)}/resource-organization/folders/${encodePathSegment(folderId)}`, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+		/** `DELETE /v1/workspaces/:id/folders/:folder_id` — scope `workspaces:write`. */
+		delete: (workspaceId: string, folderId: string, options?: Opts): Promise<void> => this.client.request({ method: "DELETE", path: `/v1/workspaces/${encodePathSegment(workspaceId)}/folders/${encodePathSegment(folderId)}`, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
-		/** `PUT /v1/workspaces/:id/resource-organization/folders/:folder_id/resources/:resource_type/:resource_id` — scope `workspaces:write`. */
+		/** `PUT /v1/workspaces/:id/folders/:folder_id/resources/:resource_type/:resource_id` — scope `workspaces:write`. */
 		addResource: (workspaceId: string, folderId: string, resourceType: string, resourceId: string, body?: { position?: number }, options?: Opts): Promise<APIWorkspaceResourceOrganization> =>
 			this.client.request({
 				method: "PUT",
-				path: `/v1/workspaces/${encodePathSegment(workspaceId)}/resource-organization/folders/${encodePathSegment(folderId)}/resources/${encodePathSegment(resourceType)}/${encodePathSegment(resourceId)}`,
+				path: `/v1/workspaces/${encodePathSegment(workspaceId)}/folders/${encodePathSegment(folderId)}/resources/${encodePathSegment(resourceType)}/${encodePathSegment(resourceId)}`,
 				body: body ?? {},
 				signal: options?.signal,
 				timeoutMs: options?.timeoutMs,
 			}),
 
-		/** `DELETE /v1/workspaces/:id/resource-organization/folders/:folder_id/resources/:resource_type/:resource_id` — scope `workspaces:write`. */
+		/** `DELETE /v1/workspaces/:id/folders/:folder_id/resources/:resource_type/:resource_id` — scope `workspaces:write`. */
 		removeResource: (workspaceId: string, folderId: string, resourceType: string, resourceId: string, options?: Opts): Promise<APIWorkspaceResourceOrganization> =>
 			this.client.request({
 				method: "DELETE",
-				path: `/v1/workspaces/${encodePathSegment(workspaceId)}/resource-organization/folders/${encodePathSegment(folderId)}/resources/${encodePathSegment(resourceType)}/${encodePathSegment(resourceId)}`,
+				path: `/v1/workspaces/${encodePathSegment(workspaceId)}/folders/${encodePathSegment(folderId)}/resources/${encodePathSegment(resourceType)}/${encodePathSegment(resourceId)}`,
 				signal: options?.signal,
 				timeoutMs: options?.timeoutMs,
 			}),
 	};
 
 	readonly favorites = {
-		/** `PUT /v1/workspaces/:id/resource-organization/favorites/:resource_type/:resource_id` — scope `workspaces:write`. */
+		/** `PUT /v1/workspaces/:id/favorites/:resource_type/:resource_id` — scope `workspaces:write`. */
 		add: (workspaceId: string, resourceType: string, resourceId: string, body?: { position?: number }, options?: Opts): Promise<APIWorkspaceResourceOrganization> =>
 			this.client.request({
 				method: "PUT",
-				path: `/v1/workspaces/${encodePathSegment(workspaceId)}/resource-organization/favorites/${encodePathSegment(resourceType)}/${encodePathSegment(resourceId)}`,
+				path: `/v1/workspaces/${encodePathSegment(workspaceId)}/favorites/${encodePathSegment(resourceType)}/${encodePathSegment(resourceId)}`,
 				body: body ?? {},
 				signal: options?.signal,
 				timeoutMs: options?.timeoutMs,
 			}),
 
-		/** `DELETE /v1/workspaces/:id/resource-organization/favorites/:resource_type/:resource_id` — scope `workspaces:write`. */
+		/** `DELETE /v1/workspaces/:id/favorites/:resource_type/:resource_id` — scope `workspaces:write`. */
 		remove: (workspaceId: string, resourceType: string, resourceId: string, options?: Opts): Promise<APIWorkspaceResourceOrganization> =>
 			this.client.request({
 				method: "DELETE",
-				path: `/v1/workspaces/${encodePathSegment(workspaceId)}/resource-organization/favorites/${encodePathSegment(resourceType)}/${encodePathSegment(resourceId)}`,
+				path: `/v1/workspaces/${encodePathSegment(workspaceId)}/favorites/${encodePathSegment(resourceType)}/${encodePathSegment(resourceId)}`,
 				signal: options?.signal,
 				timeoutMs: options?.timeoutMs,
 			}),

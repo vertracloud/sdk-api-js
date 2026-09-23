@@ -165,7 +165,7 @@ const cases: ContractCase[] = [
 		name: "workspaces.folders.addResource — optional position in body",
 		call: (c) => c.workspaces.folders.addResource(FAKE, FAKE2, "application", FAKE3, { position: 2 }),
 		method: "PUT",
-		path: `/v1/workspaces/${FAKE}/resource-organization/folders/${FAKE2}/resources/application/${FAKE3}`,
+		path: `/v1/workspaces/${FAKE}/folders/${FAKE2}/resources/application/${FAKE3}`,
 		body: { position: 2 },
 	},
 ];
