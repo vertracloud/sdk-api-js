@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.2](https://github.com/vertracloud/sdk-api-js/compare/v0.1.1...v0.1.2) (2026-09-30)
+
+
+* release 0.1.2 ([c404b68](https://github.com/vertracloud/sdk-api-js/commit/c404b68cad0f70ab3dfecc8661cce8cc76638bbc))
+
 ## [0.1.1](https://github.com/vertracloud/sdk-api-js/compare/v0.1.0...v0.1.1) (2026-09-23)
 
 

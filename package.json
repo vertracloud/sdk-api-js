@@ -1,6 +1,6 @@
 {
 	"name": "@vertracloud/sdk-api",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"private": false,
 	"description": "Official TypeScript/JavaScript SDK for the public API of Vertra Cloud, a Brazilian application hosting platform (PaaS).",
 	"type": "module",
