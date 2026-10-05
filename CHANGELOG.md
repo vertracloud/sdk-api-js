@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.3](https://github.com/vertracloud/sdk-api-js/compare/v0.1.2...v0.1.3) (2026-10-05)
+
+
+* release 0.1.3 ([79788e4](https://github.com/vertracloud/sdk-api-js/commit/79788e40737562ac54d11db54207695e4c527ed3))
+
+
+### Features
+
+* **billing:** billing details, card provider and api-types 0.3.2 types ([ca56b89](https://github.com/vertracloud/sdk-api-js/commit/ca56b8987ad425866d3d8baea816f77896dd1d16))
+
 ## [0.1.2](https://github.com/vertracloud/sdk-api-js/compare/v0.1.1...v0.1.2) (2026-09-30)
 
 
