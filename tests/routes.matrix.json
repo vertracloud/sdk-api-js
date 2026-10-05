@@ -181,6 +181,10 @@
 	},
 	{
 		"method": "GET",
+		"path": "/v1/users/me/billing"
+	},
+	{
+		"method": "GET",
 		"path": "/v1/users/me/sessions"
 	},
 	{
@@ -366,6 +370,10 @@
 	{
 		"method": "PUT",
 		"path": "/v1/databases/:id"
+	},
+	{
+		"method": "PUT",
+		"path": "/v1/users/me/billing"
 	},
 	{
 		"method": "PUT",

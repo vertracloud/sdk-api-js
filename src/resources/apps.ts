@@ -13,23 +13,23 @@ import type {
 	APIApplicationFileUpload,
 	APIApplicationMetric,
 	APIApplicationOperationResponse,
+	APIApplicationRuntimes,
 	APIApplicationStatus,
 	APIApplicationStatusShort,
 	APIApplicationSubdomain,
 	APIApplicationWebPublish,
 	APIApplicationWebhook,
 	APIApplicationWebhookUrl,
-	APIRuntimesResponse,
 	FileContentQuery,
 	FileListQuery,
 	RESTDeleteAPIApplicationFileBody,
 	RESTPatchAPIApplicationFileMoveBody,
 	RESTPatchAPIApplicationUpdateConfigBody,
 	RESTPostAPIApplicationEnvironmentBody,
+	RESTPostAPIApplicationRestartBody,
 	RESTPostAPIApplicationWebhookCreateBody,
 	RESTPutAPIApplicationFileBody,
 	RequestOptions,
-	RestartAppBody,
 } from "../types.js";
 
 export interface CreateAppOptions extends RequestOptions {
@@ -76,7 +76,7 @@ export class AppsResource {
 	}
 
 	/** `GET /v1/apps/runtimes` — scope `apps:read`. Catalog of supported languages/runtimes for app creation. */
-	runtimes(options?: RequestOptions): Promise<APIRuntimesResponse> {
+	runtimes(options?: RequestOptions): Promise<APIApplicationRuntimes> {
 		return this.client.request({ method: "GET", path: "/v1/apps/runtimes", signal: options?.signal, timeoutMs: options?.timeoutMs });
 	}
 
@@ -142,7 +142,7 @@ export class AppsResource {
 	}
 
 	/** `POST /v1/apps/:id/restart` — scope `apps:write`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/restart */
-	restart(id: string, body?: RestartAppBody, options?: RequestOptions): Promise<APIApplicationOperationResponse> {
+	restart(id: string, body?: RESTPostAPIApplicationRestartBody, options?: RequestOptions): Promise<APIApplicationOperationResponse> {
 		return this.client.request({ method: "POST", path: `/v1/apps/${encodePathSegment(id)}/restart`, query: withWorkspace(options), body, signal: options?.signal, timeoutMs: options?.timeoutMs });
 	}
 

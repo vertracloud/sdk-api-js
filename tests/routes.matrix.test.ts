@@ -34,15 +34,15 @@ function expectedPath(template: string): string {
 }
 
 const expectedRoutes = new Set(matrix.map((r) => `${r.method} ${expectedPath(r.path)}`));
-assert.equal(expectedRoutes.size, 99, "fixture must have exactly 99 unique routes");
+assert.equal(expectedRoutes.size, 101, "fixture must have exactly 101 unique routes");
 
 // The fixture must be exactly the public API key catalog — a route added to or dropped from the
 // catalog fails here until the SDK follows.
 const catalogRoutes = new Set(Object.values(API_KEY_SCOPES).flatMap((scope) => scope.routes.map((r) => `${r.method} ${r.path}`)));
 assert.deepEqual(new Set(matrix.map((r) => `${r.method} ${r.path}`)), catalogRoutes, "fixture must match API_KEY_SCOPES");
 
-describe("routes matrix — every SDK method maps to exactly one of the 99 frozen routes", () => {
-	it("(a)+(b): calling every resource method hits exactly the 99 expected method+path pairs, nothing else", async () => {
+describe("routes matrix — every SDK method maps to exactly one of the 101 frozen routes", () => {
+	it("(a)+(b): calling every resource method hits exactly the 101 expected method+path pairs, nothing else", async () => {
 		const captured: { method: string; path: string }[] = [];
 		const fetchImpl = makeMockFetch([], { jsonBody: { response: {} } });
 		const client = new VertraClient({
@@ -160,6 +160,8 @@ describe("routes matrix — every SDK method maps to exactly one of the 99 froze
 		await client.billing.orders.status(FAKE);
 		await client.billing.orders.create({});
 		await client.billing.orders.initiatePix(FAKE);
+		await client.billing.details();
+		await client.billing.updateDetails({ name: "x", address: { line1: "x", number: null, line2: null, district: null, city: "x", city_code: null, state: null, postal_code: null, country: "US" } });
 		await client.billing.redeem(FAKE);
 
 		noop();
@@ -172,9 +174,9 @@ describe("routes matrix — every SDK method maps to exactly one of the 99 froze
 		}
 		// (b) nothing outside the fixture was hit
 		for (const call of capturedSet) {
-			assert.ok(expectedRoutes.has(call), `unexpected call outside the 99-route matrix: ${call}`);
+			assert.ok(expectedRoutes.has(call), `unexpected call outside the 101-route matrix: ${call}`);
 		}
-		assert.equal(capturedSet.size, 99);
+		assert.equal(capturedSet.size, 101);
 	});
 });
 

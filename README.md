@@ -151,9 +151,9 @@ const client = new VertraClient({ apiKey: "test", fetch: myFakeFetch });
 | Snapshots | `client.snapshots` | 5 |
 | Account | `client.account` (+ `.sessions`, `.folders`, `.favorites`) | 10 |
 | Workspaces | `client.workspaces` (+ `.members`, `.roles`, `.invites`, `.actionRequests`, `.apps`, `.databases`, `.folders`, `.favorites`) | 30 |
-| Billing | `client.billing` (+ `.orders`) | 5 |
+| Billing | `client.billing` (+ `.orders`) | 7 |
 
-Dashboard-only features (activity log, notifications, API key management, the database **Data** tab, plan downgrade, creating workspace invites, transferring workspace ownership and approving action requests) are not part of the public API. See [what an API key cannot do](https://docs.vertracloud.app/sdks).
+Dashboard-only features (activity log, notifications, API key management, the database **Data** tab, plan downgrade, creating workspace invites, approving action requests, and card payments: saved cards, paying an order by card, automatic renewal, coupon preview and receipts) are not part of the public API. See [what an API key cannot do](https://docs.vertracloud.app/sdks).
 
 ## Versioning
 
