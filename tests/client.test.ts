@@ -182,6 +182,14 @@ describe("VertraClient — query params", () => {
 		await client.apps.files.upload("x", new Blob(["a"]), "a.txt", { restart: false });
 		assert.equal(calls[0].url.searchParams.get("restart"), "false");
 	});
+
+	it("apps.files.upload sends path in the query and omits it when not given", async () => {
+		const { client, calls } = makeClient();
+		await client.apps.files.upload("x", new Blob(["a"]), "a.txt", { path: "src/lib" });
+		assert.equal(calls[0].url.searchParams.get("path"), "src/lib");
+		await client.apps.files.upload("x", new Blob(["a"]), "a.txt");
+		assert.equal(calls[1].url.searchParams.has("path"), false);
+	});
 });
 
 describe("VertraClient — multipart", () => {

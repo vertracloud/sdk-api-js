@@ -238,14 +238,16 @@ export class AppsResource {
 		/**
 		 * `POST /v1/apps/:id/files/upload` — scope `apps:files`. `multipart/form-data`, field `file`.
 		 * `restart` query is serialized as the string `"true"`/`"false"`.
+		 * `options.path` is the destination folder inside the app; omitted or empty means the root.
+		 * A ZIP is extracted into that folder; any other file is written to `path/<filename>`.
 		 */
-		upload: (id: string, file: Blob, filename: string, options?: RequestOptions & { restart?: boolean }): Promise<APIApplicationFileUpload> => {
+		upload: (id: string, file: Blob, filename: string, options?: RequestOptions & { restart?: boolean; path?: string }): Promise<APIApplicationFileUpload> => {
 			const form = new FormData();
 			form.set("file", file, filename);
 			return this.client.request({
 				method: "POST",
 				path: `/v1/apps/${encodePathSegment(id)}/files/upload`,
-				query: { restart: options?.restart, workspace_id: options?.workspaceId },
+				query: { restart: options?.restart, path: options?.path, workspace_id: options?.workspaceId },
 				form,
 				signal: options?.signal,
 				timeoutMs: options?.timeoutMs ?? 120_000,
