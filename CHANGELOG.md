@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.4](https://github.com/vertracloud/sdk-api-js/compare/v0.1.3...v0.1.4) (2026-10-10)
+
+
+* release 0.1.4 ([2d5e823](https://github.com/vertracloud/sdk-api-js/commit/2d5e823b484e7dd6011e663f213706f4b20e1488))
+
+
+### Features
+
+* **apps:** add destination path option to file upload ([7bf30d2](https://github.com/vertracloud/sdk-api-js/commit/7bf30d25f6b1548620be4892cb8c1df1a8ebc10d))
+
 ## [0.1.3](https://github.com/vertracloud/sdk-api-js/compare/v0.1.2...v0.1.3) (2026-10-05)
 
 
