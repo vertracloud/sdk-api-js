@@ -49,7 +49,7 @@
 		"check": "npm run typecheck && npm run lint && npm run test"
 	},
 	"dependencies": {
-		"@vertracloud/api-types": "0.3.3"
+		"@vertracloud/api-types": "0.3.4"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.9.4",
