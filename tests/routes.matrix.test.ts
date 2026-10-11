@@ -34,15 +34,15 @@ function expectedPath(template: string): string {
 }
 
 const expectedRoutes = new Set(matrix.map((r) => `${r.method} ${expectedPath(r.path)}`));
-assert.equal(expectedRoutes.size, 101, "fixture must have exactly 101 unique routes");
+assert.equal(expectedRoutes.size, 105, "fixture must have exactly 105 unique routes");
 
 // The fixture must be exactly the public API key catalog — a route added to or dropped from the
 // catalog fails here until the SDK follows.
 const catalogRoutes = new Set(Object.values(API_KEY_SCOPES).flatMap((scope) => scope.routes.map((r) => `${r.method} ${r.path}`)));
 assert.deepEqual(new Set(matrix.map((r) => `${r.method} ${r.path}`)), catalogRoutes, "fixture must match API_KEY_SCOPES");
 
-describe("routes matrix — every SDK method maps to exactly one of the 101 frozen routes", () => {
-	it("(a)+(b): calling every resource method hits exactly the 101 expected method+path pairs, nothing else", async () => {
+describe("routes matrix — every SDK method maps to exactly one of the 105 frozen routes", () => {
+	it("(a)+(b): calling every resource method hits exactly the 105 expected method+path pairs, nothing else", async () => {
 		const captured: { method: string; path: string }[] = [];
 		const fetchImpl = makeMockFetch([], { jsonBody: { response: {} } });
 		const client = new VertraClient({
@@ -71,6 +71,10 @@ describe("routes matrix — every SDK method maps to exactly one of the 101 froz
 		await client.apps.restart(FAKE);
 		await client.apps.updateConfig(FAKE, {});
 		await client.apps.delete(FAKE);
+		await client.apps.releases.list(FAKE);
+		await client.apps.releases.log(FAKE, FAKE2);
+		await client.apps.releases.previewRollback(FAKE, FAKE2);
+		await client.apps.releases.rollback(FAKE, FAKE2);
 		await client.apps.deploys.list(FAKE);
 		await client.apps.deploys.webhook.get(FAKE);
 		await client.apps.deploys.webhook.create(FAKE, { owner: "o", repo_name: "r", repo_id: "1", account_id: "1" });
@@ -174,9 +178,9 @@ describe("routes matrix — every SDK method maps to exactly one of the 101 froz
 		}
 		// (b) nothing outside the fixture was hit
 		for (const call of capturedSet) {
-			assert.ok(expectedRoutes.has(call), `unexpected call outside the 101-route matrix: ${call}`);
+			assert.ok(expectedRoutes.has(call), `unexpected call outside the 105-route matrix: ${call}`);
 		}
-		assert.equal(capturedSet.size, 101);
+		assert.equal(capturedSet.size, 105);
 	});
 });
 

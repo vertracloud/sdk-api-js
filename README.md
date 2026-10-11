@@ -134,6 +134,29 @@ try {
 
 Other subclasses: `AuthenticationError` (401), `PermissionError` (403 — including a missing key scope) and `ValidationError` (400/422). The error codes are listed in the [API reference](https://docs.vertracloud.app/api-reference/introduction).
 
+### Releases and rollback
+
+```ts
+const { data } = await client.apps.releases.list(appId, { limit: 10 });
+// Newest first. data[0] is usually the active release, and rolling back to it returns 409 RELEASE_ALREADY_ACTIVE,
+// so pick the newest release that can be rolled back to.
+const target = data.find((release) => release.status !== "active" && release.rollback.available);
+if (!target) throw new Error("No release on this page can be rolled back to.");
+const releaseId = target.id;
+
+// Preview first: only environment variable names and their change, never values.
+const preview = await client.apps.releases.previewRollback(appId, releaseId);
+
+// Restores the release's code and restarts the app. Add restore_environment to restore its variables too.
+await client.apps.releases.rollback(appId, releaseId, { restore_environment: false });
+
+// Optional commit message shown in the release history.
+await client.apps.files.upload(appId, zip, "app.zip", { message: "fix login" });
+
+// Deploy settings (some options depend on the plan).
+await client.apps.updateConfig(appId, { deploy: { auto_rollback: true, health_check_path: "/health" } });
+```
+
 ### Testing your code
 
 Pass your own `fetch` to the client to answer requests without touching the network:
@@ -146,7 +169,7 @@ const client = new VertraClient({ apiKey: "test", fetch: myFakeFetch });
 
 | Domain | Resource | Routes |
 |---|---|---|
-| Apps | `client.apps` (+ `.deploys`, `.network`, `.envs`, `.files`) | 36 |
+| Apps | `client.apps` (+ `.deploys`, `.releases`, `.network`, `.envs`, `.files`) | 40 |
 | Databases | `client.databases` (+ `.credentials`) | 13 |
 | Snapshots | `client.snapshots` | 5 |
 | Account | `client.account` (+ `.sessions`, `.folders`, `.favorites`) | 10 |

@@ -129,6 +129,18 @@
 	},
 	{
 		"method": "GET",
+		"path": "/v1/apps/:id/releases"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/apps/:id/releases/:release_id/log"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/apps/:id/releases/:release_id/rollback"
+	},
+	{
+		"method": "GET",
 		"path": "/v1/apps/:id/status"
 	},
 	{
@@ -270,6 +282,10 @@
 	{
 		"method": "POST",
 		"path": "/v1/apps/:id/network/purge-cache"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/apps/:id/releases/:release_id/rollback"
 	},
 	{
 		"method": "POST",

@@ -141,6 +141,49 @@ const cases: ContractCase[] = [
 		body: { reinstall_dependencies: true, force_build: false },
 	},
 	{
+		name: "apps.releases.list — page/limit/workspace_id in the query",
+		call: (c) => c.apps.releases.list(FAKE, { page: 2, limit: 50, workspaceId: "ws-1" }),
+		method: "GET",
+		path: `/v1/apps/${FAKE}/releases`,
+		query: { page: "2", limit: "50", workspace_id: "ws-1" },
+		body: "none",
+	},
+	{
+		name: "apps.releases.log — release id in the path",
+		call: (c) => c.apps.releases.log(FAKE, FAKE2),
+		method: "GET",
+		path: `/v1/apps/${FAKE}/releases/${FAKE2}/log`,
+		body: "none",
+	},
+	{
+		name: "apps.releases.previewRollback — GET without body",
+		call: (c) => c.apps.releases.previewRollback(FAKE, FAKE2),
+		method: "GET",
+		path: `/v1/apps/${FAKE}/releases/${FAKE2}/rollback`,
+		body: "none",
+	},
+	{
+		name: "apps.releases.rollback — restore_environment: true in the body",
+		call: (c) => c.apps.releases.rollback(FAKE, FAKE2, { restore_environment: true }),
+		method: "POST",
+		path: `/v1/apps/${FAKE}/releases/${FAKE2}/rollback`,
+		body: { restore_environment: true },
+	},
+	{
+		name: "apps.releases.rollback — no body argument sends an empty object (environment kept)",
+		call: (c) => c.apps.releases.rollback(FAKE, FAKE2),
+		method: "POST",
+		path: `/v1/apps/${FAKE}/releases/${FAKE2}/rollback`,
+		body: {},
+	},
+	{
+		name: "apps.updateConfig — deploy settings, null clears health_check_path",
+		call: (c) => c.apps.updateConfig(FAKE, { deploy: { zero_downtime: "auto", auto_rollback: true, health_check_path: null } }),
+		method: "PATCH",
+		path: `/v1/apps/${FAKE}/config`,
+		body: { deploy: { zero_downtime: "auto", auto_rollback: true, health_check_path: null } },
+	},
+	{
 		name: "apps.envs.set — snake_case env fields",
 		call: (c) => c.apps.envs.set(FAKE, { key: "K", value: "V", note: "n" }),
 		method: "POST",
@@ -235,5 +278,15 @@ describe("contract — multipart field names", () => {
 		const form = call.init.body as FormData;
 		assert.ok(form instanceof FormData);
 		assert.deepEqual([...form.keys()], ["file"]);
+	});
+
+	it("apps.files.upload — message is an extra text part, only when given", async () => {
+		const calls: CapturedCall[] = [];
+		const { client } = makeClient({ jsonBody: { response: {} } }, calls);
+		await client.apps.files.upload(FAKE, new Blob(["content"]), "a.txt", { message: "fix login" });
+
+		const form = calls[0]?.init.body as FormData;
+		assert.deepEqual([...form.keys()].sort(), ["file", "message"]);
+		assert.equal(form.get("message"), "fix login");
 	});
 });

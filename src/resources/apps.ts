@@ -13,6 +13,9 @@ import type {
 	APIApplicationFileUpload,
 	APIApplicationMetric,
 	APIApplicationOperationResponse,
+	APIApplicationRelease,
+	APIApplicationReleaseLog,
+	APIApplicationRollbackPreview,
 	APIApplicationRuntimes,
 	APIApplicationStatus,
 	APIApplicationStatusShort,
@@ -22,11 +25,13 @@ import type {
 	APIApplicationWebhookUrl,
 	FileContentQuery,
 	FileListQuery,
+	PaginationMeta,
 	RESTDeleteAPIApplicationFileBody,
 	RESTPatchAPIApplicationFileMoveBody,
 	RESTPatchAPIApplicationUpdateConfigBody,
 	RESTPostAPIApplicationEnvironmentBody,
 	RESTPostAPIApplicationRestartBody,
+	RESTPostAPIApplicationRollbackBody,
 	RESTPostAPIApplicationWebhookCreateBody,
 	RESTPutAPIApplicationFileBody,
 	RequestOptions,
@@ -146,7 +151,11 @@ export class AppsResource {
 		return this.client.request({ method: "POST", path: `/v1/apps/${encodePathSegment(id)}/restart`, query: withWorkspace(options), body, signal: options?.signal, timeoutMs: options?.timeoutMs });
 	}
 
-	/** `PATCH /v1/apps/:id/config` — scope `apps:write`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/updateconfig */
+	/**
+	 * `PATCH /v1/apps/:id/config` — scope `apps:write`. `deploy` sets zero downtime, automatic rollback
+	 * and the health check path (`null` clears it). Plan-gated: `zero_downtime: "on"` fails with 403
+	 * `PLAN_DOES_NOT_SUPPORT_ZERO_DOWNTIME` and `auto_rollback: true` with 403
+	 * `PLAN_DOES_NOT_SUPPORT_AUTO_ROLLBACK`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/updateconfig */
 	updateConfig(id: string, body: RESTPatchAPIApplicationUpdateConfigBody, options?: RequestOptions): Promise<string> {
 		return this.client.request({ method: "PATCH", path: `/v1/apps/${encodePathSegment(id)}/config`, query: withWorkspace(options), body, signal: options?.signal, timeoutMs: options?.timeoutMs });
 	}
@@ -171,6 +180,34 @@ export class AppsResource {
 			/** `DELETE /v1/apps/:id/deploys/webhook` — scope `apps:write`. */
 			delete: (id: string, options?: RequestOptions): Promise<void> => this.client.request({ method: "DELETE", path: `/v1/apps/${encodePathSegment(id)}/deploys/webhook`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
 		},
+	};
+
+	readonly releases = {
+		/** `GET /v1/apps/:id/releases` — scope `apps:read`. Newest first; `limit` defaults to 20, maximum 50. @see https://docs.vertracloud.app/api-reference/endpoint/apps/releases/list */
+		list: (id: string, options?: RequestOptions & { page?: number; limit?: number }): Promise<PaginationMeta<APIApplicationRelease>> =>
+			this.client.request({ method: "GET", path: `/v1/apps/${encodePathSegment(id)}/releases`, query: { page: options?.page, limit: options?.limit, workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+
+		/** `GET /v1/apps/:id/releases/:release_id/log` — scope `apps:read`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/releases/log */
+		log: (id: string, releaseId: string, options?: RequestOptions): Promise<APIApplicationReleaseLog> => this.client.request({ method: "GET", path: `/v1/apps/${encodePathSegment(id)}/releases/${encodePathSegment(releaseId)}/log`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
+
+		/**
+		 * `GET /v1/apps/:id/releases/:release_id/rollback` — scope `apps:envs`. Previews a rollback and changes nothing.
+		 * Returns only environment variable names with their change, never values.
+		 * Throws a 403 `PLAN_DOES_NOT_SUPPORT_ROLLBACK` when the plan has no rollback.
+		 * @see https://docs.vertracloud.app/api-reference/endpoint/apps/releases/rollback-preview
+		 */
+		previewRollback: (id: string, releaseId: string, options?: RequestOptions): Promise<APIApplicationRollbackPreview> =>
+			this.client.request({ method: "GET", path: `/v1/apps/${encodePathSegment(id)}/releases/${encodePathSegment(releaseId)}/rollback`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
+
+		/**
+		 * `POST /v1/apps/:id/releases/:release_id/rollback` — scope `apps:write`; `restore_environment: true`
+		 * also needs `apps:envs`. Restores the release's code, restarts the app and returns the new release.
+		 * Errors: 403 `PLAN_DOES_NOT_SUPPORT_ROLLBACK`, 404 `RELEASE_NOT_FOUND`, 409 `RELEASE_ALREADY_ACTIVE`,
+		 * 410 `RELEASE_EXPIRED`, `OPERATION_IN_PROGRESS`, `RESTORE_COOLDOWN` and `DEPLOY_RATE_LIMITED`.
+		 * @see https://docs.vertracloud.app/api-reference/endpoint/apps/releases/rollback
+		 */
+		rollback: (id: string, releaseId: string, body?: RESTPostAPIApplicationRollbackBody, options?: RequestOptions): Promise<APIApplicationRelease> =>
+			this.client.request({ method: "POST", path: `/v1/apps/${encodePathSegment(id)}/releases/${encodePathSegment(releaseId)}/rollback`, query: withWorkspace(options), body: body ?? {}, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 	};
 
 	readonly network = {
@@ -240,10 +277,12 @@ export class AppsResource {
 		 * `restart` query is serialized as the string `"true"`/`"false"`.
 		 * `options.path` is the destination folder inside the app; omitted or empty means the root.
 		 * A ZIP is extracted into that folder; any other file is written to `path/<filename>`.
+		 * `options.message` is the commit message shown in the release history (up to 500 characters).
 		 */
-		upload: (id: string, file: Blob, filename: string, options?: RequestOptions & { restart?: boolean; path?: string }): Promise<APIApplicationFileUpload> => {
+		upload: (id: string, file: Blob, filename: string, options?: RequestOptions & { restart?: boolean; path?: string; message?: string }): Promise<APIApplicationFileUpload> => {
 			const form = new FormData();
 			form.set("file", file, filename);
+			if (options?.message !== undefined) form.set("message", options.message);
 			return this.client.request({
 				method: "POST",
 				path: `/v1/apps/${encodePathSegment(id)}/files/upload`,
