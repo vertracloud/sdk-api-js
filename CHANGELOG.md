@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.5](https://github.com/vertracloud/sdk-api-js/compare/v0.1.4...v0.1.5) (2026-10-12)
+
+
+### Features
+
+* **apps:** releases, rollback, deploy settings and upload message ([19889ad](https://github.com/vertracloud/sdk-api-js/commit/19889ad1e7ab5410fd92b5bde00ca2e26aed5bdd))
+
 ## [0.1.4](https://github.com/vertracloud/sdk-api-js/compare/v0.1.3...v0.1.4) (2026-10-10)
 
 
