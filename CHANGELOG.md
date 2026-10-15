@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.0](https://github.com/vertracloud/sdk-api-js/compare/v0.1.5...v0.2.0) (2026-10-15)
+
+
+* **deps:** @vertracloud/api-types 0.4.0 ([ebf0d9d](https://github.com/vertracloud/sdk-api-js/commit/ebf0d9d58a03163c6e11fa35d7e6a84542279d5f))
+
+
+### Features
+
+* pin @vertracloud/api-types 0.3.6 ([6b77406](https://github.com/vertracloud/sdk-api-js/commit/6b77406bb8416b4d151111215c4f746405acd655))
+
 ## [0.1.5](https://github.com/vertracloud/sdk-api-js/compare/v0.1.4...v0.1.5) (2026-10-12)
 
 
