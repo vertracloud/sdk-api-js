@@ -5,9 +5,7 @@
 			"release-type": "node",
 			"package-name": "@vertracloud/sdk-api",
 			"bump-minor-pre-major": true,
-			"extra-files": [
-				"src/client.ts"
-			],
+			"extra-files": ["src/client.ts"],
 			"changelog-sections": [
 				{
 					"type": "feat",
