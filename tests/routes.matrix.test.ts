@@ -37,8 +37,12 @@ const expectedRoutes = new Set(matrix.map((r) => `${r.method} ${expectedPath(r.p
 assert.equal(expectedRoutes.size, 105, "fixture must have exactly 105 unique routes");
 
 // The fixture must be exactly the public API key catalog — a route added to or dropped from the
-// catalog fails here until the SDK follows.
-const catalogRoutes = new Set(Object.values(API_KEY_SCOPES).flatMap((scope) => scope.routes.map((r) => `${r.method} ${r.path}`)));
+// catalog fails here until the SDK follows. Blob Storage routes belong to `@vertracloud/blob`.
+const catalogRoutes = new Set(
+	Object.values(API_KEY_SCOPES)
+		.filter((scope) => scope.group !== "blob")
+		.flatMap((scope) => scope.routes.map((r) => `${r.method} ${r.path}`)),
+);
 assert.deepEqual(new Set(matrix.map((r) => `${r.method} ${r.path}`)), catalogRoutes, "fixture must match API_KEY_SCOPES");
 
 describe("routes matrix — every SDK method maps to exactly one of the 105 frozen routes", () => {
