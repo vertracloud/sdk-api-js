@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/vertracloud/sdk-api-js/compare/v0.2.0...v0.2.1) (2026-10-18)
+
+
+### Features
+
+* **apps:** handle async app creation with waitUntilReady ([eaa3090](https://github.com/vertracloud/sdk-api-js/commit/eaa3090aa9cb55ee471066396b161d90a4c5e221))
+
 ## [0.2.0](https://github.com/vertracloud/sdk-api-js/compare/v0.1.5...v0.2.0) (2026-10-15)
 
 
