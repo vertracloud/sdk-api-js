@@ -1,5 +1,6 @@
 import type { VertraClient } from "../client.js";
 import { encodePathSegment } from "../client.js";
+import { AppBuildFailedError, AppBuildTimeoutError } from "../errors.js";
 import type { SseEvent } from "../sse.js";
 import type {
 	APIApplication,
@@ -52,6 +53,13 @@ export interface CreateAppOptions extends RequestOptions {
 	build?: string;
 	subdomain?: string;
 	envs?: { key: string; value: string; note?: string }[];
+}
+
+export interface WaitUntilReadyOptions extends RequestOptions {
+	/** Give up after this many ms (the build keeps running). Default `600000`. */
+	timeoutMs?: number;
+	/** Poll interval in ms. Default `2000`. */
+	intervalMs?: number;
 }
 
 function withWorkspace(options?: RequestOptions): Record<string, string | undefined> {
@@ -117,7 +125,8 @@ export class AppsResource {
 
 	/**
 	 * `POST /v1/apps` — scope `apps:write`. `multipart/form-data`. Exactly one of `file`/`snapshotId`
-	 * must be given. @see https://docs.vertracloud.app/api-reference/endpoint/apps/create
+	 * must be given. Asynchronous: resolves in seconds with the app in `status: "building"` (HTTP 202);
+	 * use `waitUntilReady` to follow it to `up`/`down`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/create
 	 */
 	create(options: CreateAppOptions): Promise<APIApplication> {
 		const form = new FormData();
@@ -133,7 +142,34 @@ export class AppsResource {
 		if (options.subdomain !== undefined) form.set("subdomain", options.subdomain);
 		if (options.workspaceId !== undefined) form.set("workspace_id", options.workspaceId);
 		if (options.envs !== undefined) form.set("envs", JSON.stringify(options.envs));
-		return this.client.request({ method: "POST", path: "/v1/apps", form, signal: options.signal, timeoutMs: options.timeoutMs ?? 120_000 });
+		return this.client.request({ method: "POST", path: "/v1/apps", form, signal: options.signal, timeoutMs: options.timeoutMs ?? 60_000 });
+	}
+
+	/**
+	 * Polls `GET /v1/apps/:id` until the build ends. Resolves with the app when `up`; throws
+	 * `AppBuildFailedError` when it ends `down` and `AppBuildTimeoutError` after `timeoutMs`.
+	 * `options.timeoutMs` is the total wait, not the per-request timeout.
+	 */
+	async waitUntilReady(id: string, options: WaitUntilReadyOptions = {}): Promise<APIApplication> {
+		const { timeoutMs = 600_000, intervalMs = 2_000, signal, workspaceId } = options;
+		const deadline = Date.now() + timeoutMs;
+		for (;;) {
+			const app = await this.get(id, { workspaceId, signal });
+			if (app.status === "up") return app;
+			if (app.status === "down") throw new AppBuildFailedError(app);
+			if (Date.now() + intervalMs > deadline) throw new AppBuildTimeoutError(id, timeoutMs);
+			await new Promise<void>((resolve, reject) => {
+				const t = setTimeout(resolve, intervalMs);
+				signal?.addEventListener(
+					"abort",
+					() => {
+						clearTimeout(t);
+						reject(signal.reason);
+					},
+					{ once: true },
+				);
+			});
+		}
 	}
 
 	/** `POST /v1/apps/:id/start` — scope `apps:write`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/start */

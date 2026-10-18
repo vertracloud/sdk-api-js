@@ -1,3 +1,5 @@
+import type { APIApplication } from "@vertracloud/api-types/v1";
+
 /**
  * Error envelope shape sent by the Vertra Cloud API on any non-2xx response:
  * `{ code, message?, details?, retry_after? }`. `retry_after` (seconds) may also arrive only via
@@ -88,5 +90,35 @@ export function buildAPIError(status: number, body: VertraAPIErrorBody, retryAft
 			return new RateLimitError(status, body, retryAfterHeader);
 		default:
 			return new VertraAPIError(status, body);
+	}
+}
+
+/**
+ * Thrown by `apps.waitUntilReady` when the app ended the build as `down`. `code` is the app's
+ * `last_build_error` (e.g. `INSTALL_OUT_OF_MEMORY`), or `APP_DOWN` when the API sent none.
+ * Read `apps.logs(app.id)` for the detail.
+ */
+export class AppBuildFailedError extends Error {
+	readonly app: Pick<APIApplication, "id" | "status" | "last_build_error">;
+	readonly code: string;
+
+	constructor(app: Pick<APIApplication, "id" | "status" | "last_build_error">) {
+		super(`App ${app.id} finished the build as "${app.status}"; check apps.logs() for the cause`);
+		this.name = "AppBuildFailedError";
+		this.app = app;
+		this.code = app.last_build_error ?? "APP_DOWN";
+		Object.setPrototypeOf(this, new.target.prototype);
+	}
+}
+
+/** Thrown by `apps.waitUntilReady` when the app is still `building` after `timeoutMs`. The build keeps running server-side. */
+export class AppBuildTimeoutError extends Error {
+	constructor(
+		readonly appId: string,
+		readonly timeoutMs: number,
+	) {
+		super(`App ${appId} was still building after ${timeoutMs} ms`);
+		this.name = "AppBuildTimeoutError";
+		Object.setPrototypeOf(this, new.target.prototype);
 	}
 }

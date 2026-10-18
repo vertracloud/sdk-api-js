@@ -98,6 +98,14 @@ const zip = await client.apps.download(appId);
 await writeFile("backup.zip", Buffer.from(zip));
 ```
 
+`create` is asynchronous: it returns in seconds with the app in `status: "building"`. Follow it to the end with `waitUntilReady`, which resolves with the app once `up` and throws `AppBuildFailedError` if it ends `down` (`error.code` is the app's `last_build_error`, such as `INSTALL_OUT_OF_MEMORY`, or `APP_DOWN`; read `client.apps.logs(app.id)` for the detail) or `AppBuildTimeoutError` after `timeoutMs` (default 10 min; the build keeps going).
+
+```ts
+const ready = await client.apps.waitUntilReady(app.id, { timeoutMs: 300_000, intervalMs: 2_000 });
+```
+
+While the app builds, restart/start/stop/deploy/rollback fail with `409 APP_BUILDING`.
+
 `client.snapshots.download` works the same way.
 
 ### Realtime logs (SSE)

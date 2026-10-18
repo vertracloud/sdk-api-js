@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "vitest";
-import { AuthenticationError, NotFoundError, PermissionError, RateLimitError, ValidationError, VertraAPIError, VertraClient } from "../src/index.js";
+import { AppBuildFailedError, AppBuildTimeoutError, AuthenticationError, NotFoundError, PermissionError, RateLimitError, ValidationError, VertraAPIError, VertraClient } from "../src/index.js";
 import { FAKE_KEY, makeClient } from "./helpers.js";
 
 describe("VertraClient — auth header and envelope", () => {
@@ -266,5 +266,37 @@ describe("VertraClient — security: never leaks the API key", () => {
 			const dumped = `${String(error)} ${JSON.stringify(error)} ${(error as Error).stack}`;
 			assert.equal(dumped.includes(FAKE_KEY), false);
 		}
+	});
+});
+
+describe("apps.waitUntilReady", () => {
+	const seq = (statuses: string[]) => {
+		let i = 0;
+		return new VertraClient({
+			apiKey: FAKE_KEY,
+			fetch: (async () => new Response(JSON.stringify({ response: { id: "1", status: statuses[Math.min(i++, statuses.length - 1)] } }), { status: 200 })) as typeof fetch,
+		});
+	};
+
+	it("resolves when the app becomes up", async () => {
+		const app = await seq(["building", "building", "up"]).apps.waitUntilReady("1", { intervalMs: 1 });
+		assert.equal(app.status, "up");
+	});
+
+	it("rejects with AppBuildFailedError when it ends down", async () => {
+		await assert.rejects(seq(["building", "down"]).apps.waitUntilReady("1", { intervalMs: 1 }), AppBuildFailedError);
+	});
+
+	it("exposes last_build_error as the error code, APP_DOWN when absent", async () => {
+		const withCode = new VertraClient({
+			apiKey: FAKE_KEY,
+			fetch: (async () => new Response(JSON.stringify({ response: { id: "1", status: "down", last_build_error: "INSTALL_OUT_OF_MEMORY" } }), { status: 200 })) as typeof fetch,
+		});
+		await assert.rejects(withCode.apps.waitUntilReady("1", { intervalMs: 1 }), (e: unknown) => e instanceof AppBuildFailedError && e.code === "INSTALL_OUT_OF_MEMORY");
+		await assert.rejects(seq(["down"]).apps.waitUntilReady("1", { intervalMs: 1 }), (e: unknown) => e instanceof AppBuildFailedError && e.code === "APP_DOWN");
+	});
+
+	it("rejects with AppBuildTimeoutError when still building", async () => {
+		await assert.rejects(seq(["building"]).apps.waitUntilReady("1", { intervalMs: 5, timeoutMs: 20 }), AppBuildTimeoutError);
 	});
 });
