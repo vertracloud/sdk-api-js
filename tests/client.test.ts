@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { inspect } from "node:util";
 import { describe, it } from "vitest";
 import { AppBuildFailedError, AppBuildTimeoutError, AuthenticationError, NotFoundError, PermissionError, RateLimitError, ValidationError, VertraAPIError, VertraClient } from "../src/index.js";
 import { FAKE_KEY, makeClient } from "./helpers.js";
@@ -255,6 +256,26 @@ describe("VertraClient — security: never leaks the API key", () => {
 		const client = new VertraClient({ apiKey: FAKE_KEY });
 		const dumped = `${client.toString()} ${JSON.stringify(client)} ${JSON.stringify(client.toJSON())}`;
 		assert.equal(dumped.includes(FAKE_KEY), false);
+	});
+
+	it("util.inspect and console.log of the client and its resources never include the key", () => {
+		const client = new VertraClient({ apiKey: FAKE_KEY });
+		for (const value of [client, client.apps, client.databases, { client }, [client]]) {
+			for (const options of [{}, { depth: null, showHidden: true }, { depth: 10, getters: true }]) {
+				assert.equal(inspect(value, options).includes(FAKE_KEY), false);
+			}
+		}
+		assert.equal(inspect(client).includes("VertraClient"), true);
+		assert.equal(
+			Object.getOwnPropertyNames(client).some((name) => (client as unknown as Record<string, unknown>)[name] === FAKE_KEY),
+			false,
+		);
+	});
+
+	it("keeps sending the key after hiding it", async () => {
+		const { client, calls } = makeClient({ jsonBody: { response: {} } });
+		await client.apps.get("app-1");
+		assert.equal((calls[0].init.headers as Headers).get("Authorization"), `Bearer ${FAKE_KEY}`);
 	});
 
 	it("errors never include the key even when constructed from a request that used it", async () => {

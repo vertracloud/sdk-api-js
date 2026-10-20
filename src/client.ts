@@ -93,7 +93,7 @@ export class VertraClient {
 	readonly baseUrl: string;
 	readonly timeoutMs: number;
 	readonly userAgent: string;
-	private readonly apiKey: string;
+	readonly #apiKey: string;
 	private readonly fetchImpl: typeof fetch;
 
 	/** `apps.*` — see {@link AppsResource}. */
@@ -111,7 +111,7 @@ export class VertraClient {
 
 	constructor(config: VertraClientConfig) {
 		if (!config.apiKey) throw new Error("VertraClient: apiKey is required");
-		this.apiKey = config.apiKey;
+		this.#apiKey = config.apiKey;
 		this.baseUrl = config.baseUrl ?? DEFAULT_BASE_URL;
 		this.timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 		this.userAgent = config.userAgent ?? `vertracloud-sdk-js/${PACKAGE_VERSION}`;
@@ -134,9 +134,13 @@ export class VertraClient {
 		return `VertraClient(${this.baseUrl})`;
 	}
 
+	[Symbol.for("nodejs.util.inspect.custom")](): string {
+		return this.toString();
+	}
+
 	private headers(extra?: Record<string, string>): Headers {
 		const headers = new Headers(extra);
-		headers.set("Authorization", `Bearer ${this.apiKey}`);
+		headers.set("Authorization", `Bearer ${this.#apiKey}`);
 		headers.set("User-Agent", this.userAgent);
 		return headers;
 	}
