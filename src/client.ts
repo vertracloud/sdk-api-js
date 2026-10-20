@@ -37,9 +37,31 @@ export interface RequestConfig {
 	timeoutMs?: number;
 }
 
-/** Path segments are URL-encoded individually — never interpolate a raw id into a template string elsewhere. */
+function isDotSegment(segment: string): boolean {
+	let current = segment;
+	for (let i = 0; i < 4; i++) {
+		if (current === "" || current === "." || current === "..") return true;
+		let decoded: string;
+		try {
+			decoded = decodeURIComponent(current);
+		} catch {
+			return false;
+		}
+		if (decoded === current) return false;
+		current = decoded;
+	}
+	return false;
+}
+
+/**
+ * Path segments are URL-encoded individually — never interpolate a raw id into a template string elsewhere.
+ * Throws a `TypeError` (before any request) for an empty segment, `.` or `..`, also when percent-encoded:
+ * `URL` collapses dot-segments, so the call would reach a different route than the one requested.
+ */
 export function encodePathSegment(segment: string | number): string {
-	return encodeURIComponent(String(segment));
+	const value = String(segment);
+	if (isDotSegment(value)) throw new TypeError(`Invalid path segment: ${JSON.stringify(value)}`);
+	return encodeURIComponent(value);
 }
 
 function buildUrl(baseUrl: string, path: string, query?: QueryParams): string {
