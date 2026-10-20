@@ -1,5 +1,5 @@
 import type { VertraClient } from "../client.js";
-import { encodePathSegment } from "../client.js";
+import { deferredPathSegment } from "../client.js";
 import type { APIGroupedResourceSnapshots, APIResourceSnapshot, APISnapshotRestoreResponse } from "../types.js";
 
 /** `applications` = app snapshots, `databases` = database snapshots. Required on every `snapshots.*` call. */
@@ -27,14 +27,14 @@ export class SnapshotsResource {
 
 	/** `GET /v1/users/:id/snapshots` — scope `snapshots:read`. `id` = the app/database resource id. @see https://docs.vertracloud.app/api-reference/endpoint/apps/commits/getall */
 	list(resourceId: string, options: SnapshotOptions): Promise<APIResourceSnapshot[]> {
-		return this.client.request({ method: "GET", path: `/v1/users/${encodePathSegment(resourceId)}/snapshots`, query: { scope: options.scope }, signal: options.signal, timeoutMs: options.timeoutMs });
+		return this.client.request({ method: "GET", path: `/v1/users/${deferredPathSegment(resourceId)}/snapshots`, query: { scope: options.scope }, signal: options.signal, timeoutMs: options.timeoutMs });
 	}
 
 	/** `GET /v1/users/:id/snapshots/:snapshot_id/download` — scope `snapshots:read`. Returns the snapshot's zip as an `ArrayBuffer`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/commits/download */
 	download(resourceId: string, snapshotId: string, options: SnapshotOptions): Promise<ArrayBuffer> {
 		return this.client.requestBinary({
 			method: "GET",
-			path: `/v1/users/${encodePathSegment(resourceId)}/snapshots/${encodePathSegment(snapshotId)}/download`,
+			path: `/v1/users/${deferredPathSegment(resourceId)}/snapshots/${deferredPathSegment(snapshotId)}/download`,
 			query: { scope: options.scope },
 			signal: options.signal,
 			timeoutMs: options.timeoutMs ?? 120_000,
@@ -43,14 +43,14 @@ export class SnapshotsResource {
 
 	/** `POST /v1/users/:id/snapshots` — scope `snapshots:write`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/commits/upload */
 	create(resourceId: string, options: SnapshotOptions): Promise<APIResourceSnapshot> {
-		return this.client.request({ method: "POST", path: `/v1/users/${encodePathSegment(resourceId)}/snapshots`, query: { scope: options.scope }, signal: options.signal, timeoutMs: options.timeoutMs });
+		return this.client.request({ method: "POST", path: `/v1/users/${deferredPathSegment(resourceId)}/snapshots`, query: { scope: options.scope }, signal: options.signal, timeoutMs: options.timeoutMs });
 	}
 
 	/** `POST /v1/users/:id/snapshots/:snapshot_id/restore` — scope `snapshots:write`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/commits/revert */
 	restore(resourceId: string, snapshotId: string, options: SnapshotOptions): Promise<APISnapshotRestoreResponse> {
 		return this.client.request({
 			method: "POST",
-			path: `/v1/users/${encodePathSegment(resourceId)}/snapshots/${encodePathSegment(snapshotId)}/restore`,
+			path: `/v1/users/${deferredPathSegment(resourceId)}/snapshots/${deferredPathSegment(snapshotId)}/restore`,
 			query: { scope: options.scope },
 			signal: options.signal,
 			timeoutMs: options.timeoutMs,

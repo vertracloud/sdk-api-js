@@ -1,5 +1,5 @@
 import type { VertraClient } from "../client.js";
-import { encodePathSegment } from "../client.js";
+import { deferredPathSegment } from "../client.js";
 import type { APIUserInfoResponse, APIUserSession, APIWorkspaceResourceFolder, APIWorkspaceResourceOrganization, RESTPatchAPIUserMeBody, WorkspaceFolderColor } from "../types.js";
 
 /**
@@ -30,16 +30,16 @@ export class AccountResource {
 
 		/** `PATCH /v1/users/me/folders/:folder_id` — scope `account:write`. */
 		update: (folderId: string, body: { name?: string; color?: WorkspaceFolderColor; position?: number }, options?: { signal?: AbortSignal; timeoutMs?: number }): Promise<APIWorkspaceResourceFolder> =>
-			this.client.request({ method: "PATCH", path: `/v1/users/me/folders/${encodePathSegment(folderId)}`, body, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+			this.client.request({ method: "PATCH", path: `/v1/users/me/folders/${deferredPathSegment(folderId)}`, body, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
 		/** `DELETE /v1/users/me/folders/:folder_id` — scope `account:write`. */
-		delete: (folderId: string, options?: { signal?: AbortSignal; timeoutMs?: number }): Promise<void> => this.client.request({ method: "DELETE", path: `/v1/users/me/folders/${encodePathSegment(folderId)}`, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+		delete: (folderId: string, options?: { signal?: AbortSignal; timeoutMs?: number }): Promise<void> => this.client.request({ method: "DELETE", path: `/v1/users/me/folders/${deferredPathSegment(folderId)}`, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
 		/** `PUT /v1/users/me/folders/:folder_id/resources/:resource_type/:resource_id` — scope `account:write`. */
 		addResource: (folderId: string, resourceType: string, resourceId: string, body?: { position?: number }, options?: { signal?: AbortSignal; timeoutMs?: number }): Promise<APIWorkspaceResourceOrganization> =>
 			this.client.request({
 				method: "PUT",
-				path: `/v1/users/me/folders/${encodePathSegment(folderId)}/resources/${encodePathSegment(resourceType)}/${encodePathSegment(resourceId)}`,
+				path: `/v1/users/me/folders/${deferredPathSegment(folderId)}/resources/${deferredPathSegment(resourceType)}/${deferredPathSegment(resourceId)}`,
 				body: body ?? {},
 				signal: options?.signal,
 				timeoutMs: options?.timeoutMs,
@@ -49,7 +49,7 @@ export class AccountResource {
 		removeResource: (folderId: string, resourceType: string, resourceId: string, options?: { signal?: AbortSignal; timeoutMs?: number }): Promise<APIWorkspaceResourceOrganization> =>
 			this.client.request({
 				method: "DELETE",
-				path: `/v1/users/me/folders/${encodePathSegment(folderId)}/resources/${encodePathSegment(resourceType)}/${encodePathSegment(resourceId)}`,
+				path: `/v1/users/me/folders/${deferredPathSegment(folderId)}/resources/${deferredPathSegment(resourceType)}/${deferredPathSegment(resourceId)}`,
 				signal: options?.signal,
 				timeoutMs: options?.timeoutMs,
 			}),
@@ -60,7 +60,7 @@ export class AccountResource {
 		add: (resourceType: string, resourceId: string, body?: { position?: number }, options?: { signal?: AbortSignal; timeoutMs?: number }): Promise<APIWorkspaceResourceOrganization> =>
 			this.client.request({
 				method: "PUT",
-				path: `/v1/users/me/favorites/${encodePathSegment(resourceType)}/${encodePathSegment(resourceId)}`,
+				path: `/v1/users/me/favorites/${deferredPathSegment(resourceType)}/${deferredPathSegment(resourceId)}`,
 				body: body ?? {},
 				signal: options?.signal,
 				timeoutMs: options?.timeoutMs,
@@ -70,7 +70,7 @@ export class AccountResource {
 		remove: (resourceType: string, resourceId: string, options?: { signal?: AbortSignal; timeoutMs?: number }): Promise<APIWorkspaceResourceOrganization> =>
 			this.client.request({
 				method: "DELETE",
-				path: `/v1/users/me/favorites/${encodePathSegment(resourceType)}/${encodePathSegment(resourceId)}`,
+				path: `/v1/users/me/favorites/${deferredPathSegment(resourceType)}/${deferredPathSegment(resourceId)}`,
 				signal: options?.signal,
 				timeoutMs: options?.timeoutMs,
 			}),

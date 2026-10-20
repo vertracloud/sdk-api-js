@@ -1,5 +1,5 @@
 import type { VertraClient } from "../client.js";
-import { encodePathSegment } from "../client.js";
+import { deferredPathSegment } from "../client.js";
 import type { APIBillingDetails, APIOrderCreateResponse, APIOrderListItem, APIOrderPixPayment, APIOrderStatus, APIRedeemResponse, OrderProvider, RESTPostAPIOrderCreateBody, RESTPutAPIBillingDetailsBody } from "../types.js";
 
 type Opts = { signal?: AbortSignal; timeoutMs?: number };
@@ -16,13 +16,13 @@ export class BillingResource {
 		list: (query?: { provider?: OrderProvider }, options?: Opts): Promise<APIOrderListItem[]> => this.client.request({ method: "GET", path: "/v1/orders", query, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
 		/** `GET /v1/orders/:orderId/status` — scope `billing:read`. */
-		status: (orderId: string, options?: Opts): Promise<APIOrderStatus> => this.client.request({ method: "GET", path: `/v1/orders/${encodePathSegment(orderId)}/status`, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+		status: (orderId: string, options?: Opts): Promise<APIOrderStatus> => this.client.request({ method: "GET", path: `/v1/orders/${deferredPathSegment(orderId)}/status`, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
 		/** `POST /v1/orders` — scope `billing:write`. */
 		create: (body: RESTPostAPIOrderCreateBody, options?: Opts): Promise<APIOrderCreateResponse> => this.client.request({ method: "POST", path: "/v1/orders", body, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
 		/** `POST /v1/orders/:orderId/initiate/pix` — scope `billing:write`. */
-		initiatePix: (orderId: string, options?: Opts): Promise<APIOrderPixPayment> => this.client.request({ method: "POST", path: `/v1/orders/${encodePathSegment(orderId)}/initiate/pix`, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+		initiatePix: (orderId: string, options?: Opts): Promise<APIOrderPixPayment> => this.client.request({ method: "POST", path: `/v1/orders/${deferredPathSegment(orderId)}/initiate/pix`, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 	};
 
 	/** `GET /v1/users/me/billing` — scope `billing:read`. `null` until details are saved. */
@@ -37,6 +37,6 @@ export class BillingResource {
 
 	/** `POST /v1/redeem/:code` — scope `redeem:write`. */
 	redeem(code: string, options?: Opts): Promise<APIRedeemResponse> {
-		return this.client.request({ method: "POST", path: `/v1/redeem/${encodePathSegment(code)}`, signal: options?.signal, timeoutMs: options?.timeoutMs });
+		return this.client.request({ method: "POST", path: `/v1/redeem/${deferredPathSegment(code)}`, signal: options?.signal, timeoutMs: options?.timeoutMs });
 	}
 }

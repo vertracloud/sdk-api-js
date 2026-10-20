@@ -20,10 +20,19 @@ describe("path segments — dot-segments and empty ids never reach the transport
 		assert.equal(encodePathSegment("%zz"), "%25zz");
 	});
 
-	it("apps.domains.remove('abc', '..') does not send DELETE /v1/apps/abc", () => {
+	it("apps.domains.remove('abc', '..') does not send DELETE /v1/apps/abc", async () => {
 		const { client, calls } = makeClient();
-		assert.throws(() => client.apps.domains.remove("abc", ".."), TypeError);
+		await assert.rejects(() => client.apps.domains.remove("abc", ".."), TypeError);
 		assert.equal(calls.length, 0);
+	});
+
+	it("rejects the promise instead of throwing synchronously, with the same message", async () => {
+		const { client } = makeClient();
+		let pending: Promise<unknown> | undefined;
+		assert.doesNotThrow(() => {
+			pending = client.apps.get("..");
+		});
+		await assert.rejects(() => pending as Promise<unknown>, { name: "TypeError", message: 'Invalid path segment: ".."' });
 	});
 
 	const cases: [string, (c: ReturnType<typeof makeClient>["client"]) => unknown][] = [
@@ -46,9 +55,13 @@ describe("path segments — dot-segments and empty ids never reach the transport
 	];
 
 	for (const [name, call] of cases) {
-		it(`${name} fails before any request`, () => {
+		it(`${name} fails before any request`, async () => {
 			const { client, calls } = makeClient();
-			assert.throws(() => call(client), TypeError);
+			let pending: unknown;
+			assert.doesNotThrow(() => {
+				pending = call(client);
+			});
+			await assert.rejects(() => pending as Promise<unknown>, TypeError);
 			assert.equal(calls.length, 0);
 		});
 	}

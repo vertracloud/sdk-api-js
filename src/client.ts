@@ -64,6 +64,27 @@ export function encodePathSegment(segment: string | number): string {
 	return encodeURIComponent(value);
 }
 
+const INVALID_SEGMENT_MARK = "\u0000";
+
+/**
+ * Same validation as {@link encodePathSegment}, but defers the `TypeError` to the request so resource methods
+ * reject their promise instead of throwing synchronously.
+ */
+export function deferredPathSegment(segment: string | number): string {
+	try {
+		return encodePathSegment(segment);
+	} catch {
+		return `${INVALID_SEGMENT_MARK}${encodeURIComponent(String(segment))}${INVALID_SEGMENT_MARK}`;
+	}
+}
+
+function assertValidPath(path: string): void {
+	const start = path.indexOf(INVALID_SEGMENT_MARK);
+	if (start === -1) return;
+	const end = path.indexOf(INVALID_SEGMENT_MARK, start + 1);
+	throw new TypeError(`Invalid path segment: ${JSON.stringify(decodeURIComponent(path.slice(start + 1, end)))}`);
+}
+
 function buildUrl(baseUrl: string, path: string, query?: QueryParams): string {
 	const url = new URL(path, baseUrl);
 	if (query) {
@@ -199,6 +220,7 @@ export class VertraClient {
 	}
 
 	private async rawRequest(config: RequestConfig, contentType?: string, extraHeaders?: Record<string, string>): Promise<{ response: Response; cleanup: () => void }> {
+		assertValidPath(config.path);
 		const timeoutMs = config.timeoutMs ?? this.timeoutMs;
 		const { signal, cleanup } = this.combineSignal(config.signal, timeoutMs);
 		const headers = this.headers(extraHeaders);

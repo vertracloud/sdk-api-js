@@ -1,5 +1,5 @@
 import type { VertraClient } from "../client.js";
-import { encodePathSegment } from "../client.js";
+import { deferredPathSegment } from "../client.js";
 import { AppBuildFailedError, AppBuildTimeoutError } from "../errors.js";
 import type { SseEvent } from "../sse.js";
 import type {
@@ -78,12 +78,12 @@ export class AppsResource {
 
 	/** `GET /v1/apps/:id` — scope `apps:read`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/get */
 	get(id: string, options?: RequestOptions): Promise<APIApplication> {
-		return this.client.request({ method: "GET", path: `/v1/apps/${encodePathSegment(id)}`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs });
+		return this.client.request({ method: "GET", path: `/v1/apps/${deferredPathSegment(id)}`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs });
 	}
 
 	/** `GET /v1/apps/:id/status` — scope `apps:read`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/status */
 	status(id: string, options?: RequestOptions): Promise<APIApplicationStatus> {
-		return this.client.request({ method: "GET", path: `/v1/apps/${encodePathSegment(id)}/status`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs });
+		return this.client.request({ method: "GET", path: `/v1/apps/${deferredPathSegment(id)}/status`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs });
 	}
 
 	/** `GET /v1/apps/status` — scope `apps:read`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/allstatus */
@@ -103,7 +103,7 @@ export class AppsResource {
 	realtime(id: string, options?: RequestOptions & { since?: number; idleTimeoutMs?: number }): AsyncGenerator<SseEvent, void, unknown> {
 		return this.client.requestSse({
 			method: "GET",
-			path: `/v1/apps/${encodePathSegment(id)}/realtime`,
+			path: `/v1/apps/${deferredPathSegment(id)}/realtime`,
 			query: { workspace_id: options?.workspaceId, since: options?.since },
 			signal: options?.signal,
 			timeoutMs: options?.timeoutMs,
@@ -113,17 +113,17 @@ export class AppsResource {
 
 	/** `GET /v1/apps/:id/metrics` — scope `apps:read`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/metrics */
 	metrics(id: string, options?: RequestOptions & { range?: "10m" | "30m" | "24h"; since?: number }): Promise<APIApplicationMetric[]> {
-		return this.client.request({ method: "GET", path: `/v1/apps/${encodePathSegment(id)}/metrics`, query: { workspace_id: options?.workspaceId, range: options?.range, since: options?.since }, signal: options?.signal, timeoutMs: options?.timeoutMs });
+		return this.client.request({ method: "GET", path: `/v1/apps/${deferredPathSegment(id)}/metrics`, query: { workspace_id: options?.workspaceId, range: options?.range, since: options?.since }, signal: options?.signal, timeoutMs: options?.timeoutMs });
 	}
 
 	/** `GET /v1/apps/:id/logs` — scope `apps:read`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/logs */
 	logs(id: string, options?: RequestOptions): Promise<string> {
-		return this.client.request({ method: "GET", path: `/v1/apps/${encodePathSegment(id)}/logs`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs });
+		return this.client.request({ method: "GET", path: `/v1/apps/${deferredPathSegment(id)}/logs`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs });
 	}
 
 	/** `GET /v1/apps/:id/download` — scope `apps:read`. Returns the app's zip as an `ArrayBuffer`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/download */
 	download(id: string, options?: RequestOptions): Promise<ArrayBuffer> {
-		return this.client.requestBinary({ method: "GET", path: `/v1/apps/${encodePathSegment(id)}/download`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs ?? 120_000 });
+		return this.client.requestBinary({ method: "GET", path: `/v1/apps/${deferredPathSegment(id)}/download`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs ?? 120_000 });
 	}
 
 	/**
@@ -177,17 +177,17 @@ export class AppsResource {
 
 	/** `POST /v1/apps/:id/start` — scope `apps:write`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/start */
 	start(id: string, options?: RequestOptions): Promise<APIApplicationOperationResponse> {
-		return this.client.request({ method: "POST", path: `/v1/apps/${encodePathSegment(id)}/start`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs });
+		return this.client.request({ method: "POST", path: `/v1/apps/${deferredPathSegment(id)}/start`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs });
 	}
 
 	/** `POST /v1/apps/:id/stop` — scope `apps:write`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/stop */
 	stop(id: string, options?: RequestOptions): Promise<APIApplicationOperationResponse> {
-		return this.client.request({ method: "POST", path: `/v1/apps/${encodePathSegment(id)}/stop`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs });
+		return this.client.request({ method: "POST", path: `/v1/apps/${deferredPathSegment(id)}/stop`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs });
 	}
 
 	/** `POST /v1/apps/:id/restart` — scope `apps:write`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/restart */
 	restart(id: string, body?: RESTPostAPIApplicationRestartBody, options?: RequestOptions): Promise<APIApplicationOperationResponse> {
-		return this.client.request({ method: "POST", path: `/v1/apps/${encodePathSegment(id)}/restart`, query: withWorkspace(options), body, signal: options?.signal, timeoutMs: options?.timeoutMs });
+		return this.client.request({ method: "POST", path: `/v1/apps/${deferredPathSegment(id)}/restart`, query: withWorkspace(options), body, signal: options?.signal, timeoutMs: options?.timeoutMs });
 	}
 
 	/**
@@ -196,38 +196,39 @@ export class AppsResource {
 	 * `PLAN_DOES_NOT_SUPPORT_ZERO_DOWNTIME` and `auto_rollback: true` with 403
 	 * `PLAN_DOES_NOT_SUPPORT_AUTO_ROLLBACK`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/updateconfig */
 	updateConfig(id: string, body: RESTPatchAPIApplicationUpdateConfigBody, options?: RequestOptions): Promise<string> {
-		return this.client.request({ method: "PATCH", path: `/v1/apps/${encodePathSegment(id)}/config`, query: withWorkspace(options), body, signal: options?.signal, timeoutMs: options?.timeoutMs });
+		return this.client.request({ method: "PATCH", path: `/v1/apps/${deferredPathSegment(id)}/config`, query: withWorkspace(options), body, signal: options?.signal, timeoutMs: options?.timeoutMs });
 	}
 
 	/** `DELETE /v1/apps/:id` — scope `apps:delete`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/delete */
 	delete(id: string, options?: RequestOptions): Promise<void> {
-		return this.client.request({ method: "DELETE", path: `/v1/apps/${encodePathSegment(id)}`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs });
+		return this.client.request({ method: "DELETE", path: `/v1/apps/${deferredPathSegment(id)}`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs });
 	}
 
 	readonly deploys = {
 		/** `GET /v1/apps/:id/deploys` — scope `apps:read`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/deployments */
-		list: (id: string, options?: RequestOptions): Promise<APIApplicationDeployment[]> => this.client.request({ method: "GET", path: `/v1/apps/${encodePathSegment(id)}/deploys`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
+		list: (id: string, options?: RequestOptions): Promise<APIApplicationDeployment[]> => this.client.request({ method: "GET", path: `/v1/apps/${deferredPathSegment(id)}/deploys`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
 		webhook: {
 			/** `GET /v1/apps/:id/deploys/webhook` — scope `apps:read`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/webhook */
-			get: (id: string, options?: RequestOptions): Promise<APIApplicationWebhook> => this.client.request({ method: "GET", path: `/v1/apps/${encodePathSegment(id)}/deploys/webhook`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
+			get: (id: string, options?: RequestOptions): Promise<APIApplicationWebhook> => this.client.request({ method: "GET", path: `/v1/apps/${deferredPathSegment(id)}/deploys/webhook`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
 			/** `POST /v1/apps/:id/deploys/webhook` — scope `apps:write`. */
 			create: (id: string, body: RESTPostAPIApplicationWebhookCreateBody, options?: RequestOptions): Promise<APIApplicationWebhookUrl> =>
-				this.client.request({ method: "POST", path: `/v1/apps/${encodePathSegment(id)}/deploys/webhook`, query: withWorkspace(options), body, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+				this.client.request({ method: "POST", path: `/v1/apps/${deferredPathSegment(id)}/deploys/webhook`, query: withWorkspace(options), body, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
 			/** `DELETE /v1/apps/:id/deploys/webhook` — scope `apps:write`. */
-			delete: (id: string, options?: RequestOptions): Promise<void> => this.client.request({ method: "DELETE", path: `/v1/apps/${encodePathSegment(id)}/deploys/webhook`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
+			delete: (id: string, options?: RequestOptions): Promise<void> => this.client.request({ method: "DELETE", path: `/v1/apps/${deferredPathSegment(id)}/deploys/webhook`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
 		},
 	};
 
 	readonly releases = {
 		/** `GET /v1/apps/:id/releases` — scope `apps:read`. Newest first; `limit` defaults to 20, maximum 50. @see https://docs.vertracloud.app/api-reference/endpoint/apps/releases/list */
 		list: (id: string, options?: RequestOptions & { page?: number; limit?: number }): Promise<PaginationMeta<APIApplicationRelease>> =>
-			this.client.request({ method: "GET", path: `/v1/apps/${encodePathSegment(id)}/releases`, query: { page: options?.page, limit: options?.limit, workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+			this.client.request({ method: "GET", path: `/v1/apps/${deferredPathSegment(id)}/releases`, query: { page: options?.page, limit: options?.limit, workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
 		/** `GET /v1/apps/:id/releases/:release_id/log` — scope `apps:read`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/releases/log */
-		log: (id: string, releaseId: string, options?: RequestOptions): Promise<APIApplicationReleaseLog> => this.client.request({ method: "GET", path: `/v1/apps/${encodePathSegment(id)}/releases/${encodePathSegment(releaseId)}/log`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
+		log: (id: string, releaseId: string, options?: RequestOptions): Promise<APIApplicationReleaseLog> =>
+			this.client.request({ method: "GET", path: `/v1/apps/${deferredPathSegment(id)}/releases/${deferredPathSegment(releaseId)}/log`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
 		/**
 		 * `GET /v1/apps/:id/releases/:release_id/rollback` — scope `apps:envs`. Previews a rollback and changes nothing.
@@ -236,7 +237,7 @@ export class AppsResource {
 		 * @see https://docs.vertracloud.app/api-reference/endpoint/apps/releases/rollback-preview
 		 */
 		previewRollback: (id: string, releaseId: string, options?: RequestOptions): Promise<APIApplicationRollbackPreview> =>
-			this.client.request({ method: "GET", path: `/v1/apps/${encodePathSegment(id)}/releases/${encodePathSegment(releaseId)}/rollback`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
+			this.client.request({ method: "GET", path: `/v1/apps/${deferredPathSegment(id)}/releases/${deferredPathSegment(releaseId)}/rollback`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
 		/**
 		 * `POST /v1/apps/:id/releases/:release_id/rollback` — scope `apps:write`; `restore_environment: true`
@@ -246,79 +247,79 @@ export class AppsResource {
 		 * @see https://docs.vertracloud.app/api-reference/endpoint/apps/releases/rollback
 		 */
 		rollback: (id: string, releaseId: string, body?: RESTPostAPIApplicationRollbackBody, options?: RequestOptions): Promise<APIApplicationRelease> =>
-			this.client.request({ method: "POST", path: `/v1/apps/${encodePathSegment(id)}/releases/${encodePathSegment(releaseId)}/rollback`, query: withWorkspace(options), body: body ?? {}, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+			this.client.request({ method: "POST", path: `/v1/apps/${deferredPathSegment(id)}/releases/${deferredPathSegment(releaseId)}/rollback`, query: withWorkspace(options), body: body ?? {}, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 	};
 
 	readonly domains = {
 		/** `GET /v1/apps/:id/domains` — scope `apps:read`. */
-		list: (id: string, options?: RequestOptions): Promise<APIApplicationDomain[]> => this.client.request({ method: "GET", path: `/v1/apps/${encodePathSegment(id)}/domains`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
+		list: (id: string, options?: RequestOptions): Promise<APIApplicationDomain[]> => this.client.request({ method: "GET", path: `/v1/apps/${deferredPathSegment(id)}/domains`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
 		/** `POST /v1/apps/:id/domains` — scope `apps:write`. Returns the created domain and its automatic `www`/root companion, when there is one. */
-		add: (id: string, body: RESTPostAPIApplicationDomainBody, options?: RequestOptions): Promise<APIApplicationDomain[]> => this.client.request({ method: "POST", path: `/v1/apps/${encodePathSegment(id)}/domains`, query: withWorkspace(options), body, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+		add: (id: string, body: RESTPostAPIApplicationDomainBody, options?: RequestOptions): Promise<APIApplicationDomain[]> => this.client.request({ method: "POST", path: `/v1/apps/${deferredPathSegment(id)}/domains`, query: withWorkspace(options), body, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
 		/** `PATCH /v1/apps/:id/domains/:domainId` — scope `apps:write`. Send only what changes; `null` clears `path_prefix` or `redirect_to`. */
 		update: (id: string, domainId: string, body: RESTPatchAPIApplicationDomainBody, options?: RequestOptions): Promise<APIApplicationDomain[]> =>
-			this.client.request({ method: "PATCH", path: `/v1/apps/${encodePathSegment(id)}/domains/${encodePathSegment(domainId)}`, query: withWorkspace(options), body, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+			this.client.request({ method: "PATCH", path: `/v1/apps/${deferredPathSegment(id)}/domains/${deferredPathSegment(domainId)}`, query: withWorkspace(options), body, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
 		/** `DELETE /v1/apps/:id/domains/:domainId` — scope `apps:write`. Removes the automatic companion together. */
-		remove: (id: string, domainId: string, options?: RequestOptions): Promise<void> => this.client.request({ method: "DELETE", path: `/v1/apps/${encodePathSegment(id)}/domains/${encodePathSegment(domainId)}`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
+		remove: (id: string, domainId: string, options?: RequestOptions): Promise<void> => this.client.request({ method: "DELETE", path: `/v1/apps/${deferredPathSegment(id)}/domains/${deferredPathSegment(domainId)}`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
 		/** `GET /v1/apps/:id/domains/:domainId/dns` — scope `apps:read`. */
 		dns: (id: string, domainId: string, options?: RequestOptions): Promise<APIApplicationDomainDnsRecord[]> =>
-			this.client.request({ method: "GET", path: `/v1/apps/${encodePathSegment(id)}/domains/${encodePathSegment(domainId)}/dns`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
+			this.client.request({ method: "GET", path: `/v1/apps/${deferredPathSegment(id)}/domains/${deferredPathSegment(domainId)}/dns`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
 		/** `POST /v1/apps/:id/domains/:domainId/connect` — scope `apps:write`. Fails with `DOMAIN_CONNECT_UNAVAILABLE` (404) when automatic setup is not available. */
 		connect: (id: string, domainId: string, options?: RequestOptions): Promise<APIApplicationDomainConnect> =>
-			this.client.request({ method: "POST", path: `/v1/apps/${encodePathSegment(id)}/domains/${encodePathSegment(domainId)}/connect`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
+			this.client.request({ method: "POST", path: `/v1/apps/${deferredPathSegment(id)}/domains/${deferredPathSegment(domainId)}/connect`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
 	};
 
 	readonly network = {
 		/** `POST /v1/apps/:id/network/purge-cache` — scope `apps:write`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/network/purgecache */
 		purgeCache: (id: string, body?: { hostnames?: string[]; paths?: string[] }, options?: RequestOptions): Promise<void> =>
-			this.client.request({ method: "POST", path: `/v1/apps/${encodePathSegment(id)}/network/purge-cache`, query: withWorkspace(options), body: body ?? {}, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+			this.client.request({ method: "POST", path: `/v1/apps/${deferredPathSegment(id)}/network/purge-cache`, query: withWorkspace(options), body: body ?? {}, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
 		/** `PATCH /v1/apps/:id/network/subdomain` — scope `apps:write`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/network/subdomain */
 		setSubdomain: (id: string, subdomain: string, options?: RequestOptions): Promise<APIApplicationSubdomain> =>
-			this.client.request({ method: "PATCH", path: `/v1/apps/${encodePathSegment(id)}/network/subdomain`, query: withWorkspace(options), body: { subdomain }, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+			this.client.request({ method: "PATCH", path: `/v1/apps/${deferredPathSegment(id)}/network/subdomain`, query: withWorkspace(options), body: { subdomain }, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
 		/** `POST /v1/apps/:id/network/publish` — scope `apps:write`. `subdomain` omitted = platform picks one. @see https://docs.vertracloud.app/api-reference/endpoint/apps/network/publish */
 		publish: (id: string, body?: { subdomain?: string }, options?: RequestOptions): Promise<APIApplicationWebPublish> =>
-			this.client.request({ method: "POST", path: `/v1/apps/${encodePathSegment(id)}/network/publish`, query: withWorkspace(options), body: body ?? {}, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+			this.client.request({ method: "POST", path: `/v1/apps/${deferredPathSegment(id)}/network/publish`, query: withWorkspace(options), body: body ?? {}, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
 		/** `DELETE /v1/apps/:id/network/publish` — scope `apps:write`. */
-		unpublish: (id: string, options?: RequestOptions): Promise<APIApplicationWebPublish> => this.client.request({ method: "DELETE", path: `/v1/apps/${encodePathSegment(id)}/network/publish`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
+		unpublish: (id: string, options?: RequestOptions): Promise<APIApplicationWebPublish> => this.client.request({ method: "DELETE", path: `/v1/apps/${deferredPathSegment(id)}/network/publish`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
 	};
 
 	readonly envs = {
 		/** `GET /v1/apps/:id/envs` — scope `apps:envs`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/enviroments/get */
-		list: (id: string, options?: RequestOptions): Promise<APIApplicationEnvironment[]> => this.client.request({ method: "GET", path: `/v1/apps/${encodePathSegment(id)}/envs`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
+		list: (id: string, options?: RequestOptions): Promise<APIApplicationEnvironment[]> => this.client.request({ method: "GET", path: `/v1/apps/${deferredPathSegment(id)}/envs`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
 		/** `POST /v1/apps/:id/envs` — scope `apps:envs`. Accepts one env object or an array. @see https://docs.vertracloud.app/api-reference/endpoint/apps/enviroments/update */
-		set: (id: string, body: RESTPostAPIApplicationEnvironmentBody, options?: RequestOptions): Promise<APIApplicationEnvironment[]> => this.client.request({ method: "POST", path: `/v1/apps/${encodePathSegment(id)}/envs`, query: withWorkspace(options), body, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+		set: (id: string, body: RESTPostAPIApplicationEnvironmentBody, options?: RequestOptions): Promise<APIApplicationEnvironment[]> => this.client.request({ method: "POST", path: `/v1/apps/${deferredPathSegment(id)}/envs`, query: withWorkspace(options), body, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
 		/** `DELETE /v1/apps/:id/envs/:envId` — scope `apps:envs`. */
-		delete: (id: string, envId: string, options?: RequestOptions): Promise<void> => this.client.request({ method: "DELETE", path: `/v1/apps/${encodePathSegment(id)}/envs/${encodePathSegment(envId)}`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
+		delete: (id: string, envId: string, options?: RequestOptions): Promise<void> => this.client.request({ method: "DELETE", path: `/v1/apps/${deferredPathSegment(id)}/envs/${deferredPathSegment(envId)}`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
 	};
 
 	readonly files = {
 		/** `GET /v1/apps/:id/files` — scope `apps:files`. */
-		list: (id: string, query?: FileListQuery, options?: RequestOptions): Promise<APIApplicationFile[]> => this.client.request({ method: "GET", path: `/v1/apps/${encodePathSegment(id)}/files`, query: { ...query, workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+		list: (id: string, query?: FileListQuery, options?: RequestOptions): Promise<APIApplicationFile[]> => this.client.request({ method: "GET", path: `/v1/apps/${deferredPathSegment(id)}/files`, query: { ...query, workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
 		/** `GET /v1/apps/:id/files/tree` — scope `apps:files`. */
-		tree: (id: string, options?: RequestOptions): Promise<APIApplicationFileTree[]> => this.client.request({ method: "GET", path: `/v1/apps/${encodePathSegment(id)}/files/tree`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
+		tree: (id: string, options?: RequestOptions): Promise<APIApplicationFileTree[]> => this.client.request({ method: "GET", path: `/v1/apps/${deferredPathSegment(id)}/files/tree`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
 		/** `GET /v1/apps/:id/files/content` — scope `apps:files`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/filemanager/content */
 		read: (id: string, query: FileContentQuery, options?: RequestOptions): Promise<APIApplicationFileContent> =>
-			this.client.request({ method: "GET", path: `/v1/apps/${encodePathSegment(id)}/files/content`, query: { ...query, workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+			this.client.request({ method: "GET", path: `/v1/apps/${deferredPathSegment(id)}/files/content`, query: { ...query, workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
 		/** `PUT /v1/apps/:id/files` — scope `apps:files`. */
-		write: (id: string, body: RESTPutAPIApplicationFileBody, options?: RequestOptions): Promise<void> => this.client.request({ method: "PUT", path: `/v1/apps/${encodePathSegment(id)}/files`, body: { ...body, workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+		write: (id: string, body: RESTPutAPIApplicationFileBody, options?: RequestOptions): Promise<void> => this.client.request({ method: "PUT", path: `/v1/apps/${deferredPathSegment(id)}/files`, body: { ...body, workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
 		/** `PATCH /v1/apps/:id/files` — scope `apps:files`. Moves/renames a file. */
-		move: (id: string, body: RESTPatchAPIApplicationFileMoveBody, options?: RequestOptions): Promise<void> => this.client.request({ method: "PATCH", path: `/v1/apps/${encodePathSegment(id)}/files`, body: { ...body, workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+		move: (id: string, body: RESTPatchAPIApplicationFileMoveBody, options?: RequestOptions): Promise<void> => this.client.request({ method: "PATCH", path: `/v1/apps/${deferredPathSegment(id)}/files`, body: { ...body, workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
 		/** `DELETE /v1/apps/:id/files` — scope `apps:files`. */
-		delete: (id: string, body: RESTDeleteAPIApplicationFileBody, options?: RequestOptions): Promise<void> => this.client.request({ method: "DELETE", path: `/v1/apps/${encodePathSegment(id)}/files`, body: { ...body, workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+		delete: (id: string, body: RESTDeleteAPIApplicationFileBody, options?: RequestOptions): Promise<void> => this.client.request({ method: "DELETE", path: `/v1/apps/${deferredPathSegment(id)}/files`, body: { ...body, workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
 		/**
 		 * `POST /v1/apps/:id/files/upload` — scope `apps:files`. `multipart/form-data`, field `file`.
@@ -333,7 +334,7 @@ export class AppsResource {
 			if (options?.message !== undefined) form.set("message", options.message);
 			return this.client.request({
 				method: "POST",
-				path: `/v1/apps/${encodePathSegment(id)}/files/upload`,
+				path: `/v1/apps/${deferredPathSegment(id)}/files/upload`,
 				query: { restart: options?.restart, path: options?.path, workspace_id: options?.workspaceId },
 				form,
 				signal: options?.signal,
