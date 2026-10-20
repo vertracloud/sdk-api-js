@@ -17,7 +17,7 @@
 	},
 	{
 		"method": "DELETE",
-		"path": "/v1/apps/:id/network/custom"
+		"path": "/v1/apps/:id/domains/:domain_id"
 	},
 	{
 		"method": "DELETE",
@@ -117,11 +117,11 @@
 	},
 	{
 		"method": "GET",
-		"path": "/v1/apps/:id/network/custom"
+		"path": "/v1/apps/:id/domains"
 	},
 	{
 		"method": "GET",
-		"path": "/v1/apps/:id/network/dns"
+		"path": "/v1/apps/:id/domains/:domain_id/dns"
 	},
 	{
 		"method": "GET",
@@ -233,6 +233,10 @@
 	},
 	{
 		"method": "PATCH",
+		"path": "/v1/apps/:id/domains/:domain_id"
+	},
+	{
+		"method": "PATCH",
 		"path": "/v1/apps/:id/config"
 	},
 	{
@@ -273,7 +277,11 @@
 	},
 	{
 		"method": "POST",
-		"path": "/v1/apps/:id/network/custom"
+		"path": "/v1/apps/:id/domains"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/apps/:id/domains/:domain_id/connect"
 	},
 	{
 		"method": "POST",

@@ -34,7 +34,7 @@ function expectedPath(template: string): string {
 }
 
 const expectedRoutes = new Set(matrix.map((r) => `${r.method} ${expectedPath(r.path)}`));
-assert.equal(expectedRoutes.size, 105, "fixture must have exactly 105 unique routes");
+assert.equal(expectedRoutes.size, 107, "fixture must have exactly 107 unique routes");
 
 // The fixture must be exactly the public API key catalog — a route added to or dropped from the
 // catalog fails here until the SDK follows. Blob Storage routes belong to `@vertracloud/blob`.
@@ -45,8 +45,8 @@ const catalogRoutes = new Set(
 );
 assert.deepEqual(new Set(matrix.map((r) => `${r.method} ${r.path}`)), catalogRoutes, "fixture must match API_KEY_SCOPES");
 
-describe("routes matrix — every SDK method maps to exactly one of the 105 frozen routes", () => {
-	it("(a)+(b): calling every resource method hits exactly the 105 expected method+path pairs, nothing else", async () => {
+describe("routes matrix — every SDK method maps to exactly one of the 107 frozen routes", () => {
+	it("(a)+(b): calling every resource method hits exactly the 107 expected method+path pairs, nothing else", async () => {
 		const captured: { method: string; path: string }[] = [];
 		const fetchImpl = makeMockFetch([], { jsonBody: { response: {} } });
 		const client = new VertraClient({
@@ -83,10 +83,12 @@ describe("routes matrix — every SDK method maps to exactly one of the 105 froz
 		await client.apps.deploys.webhook.get(FAKE);
 		await client.apps.deploys.webhook.create(FAKE, { owner: "o", repo_name: "r", repo_id: "1", account_id: "1" });
 		await client.apps.deploys.webhook.delete(FAKE);
-		await client.apps.network.customDomain.get(FAKE);
-		await client.apps.network.customDomain.set(FAKE, "example.com");
-		await client.apps.network.customDomain.remove(FAKE);
-		await client.apps.network.dns(FAKE);
+		await client.apps.domains.list(FAKE);
+		await client.apps.domains.add(FAKE, { hostname: "example.com" });
+		await client.apps.domains.update(FAKE, FAKE2, { port: 3000 });
+		await client.apps.domains.remove(FAKE, FAKE2);
+		await client.apps.domains.dns(FAKE, FAKE2);
+		await client.apps.domains.connect(FAKE, FAKE2);
 		await client.apps.network.purgeCache(FAKE);
 		await client.apps.network.setSubdomain(FAKE, "sub");
 		await client.apps.network.publish(FAKE);
@@ -182,9 +184,9 @@ describe("routes matrix — every SDK method maps to exactly one of the 105 froz
 		}
 		// (b) nothing outside the fixture was hit
 		for (const call of capturedSet) {
-			assert.ok(expectedRoutes.has(call), `unexpected call outside the 105-route matrix: ${call}`);
+			assert.ok(expectedRoutes.has(call), `unexpected call outside the 107-route matrix: ${call}`);
 		}
-		assert.equal(capturedSet.size, 105);
+		assert.equal(capturedSet.size, 107);
 	});
 });
 

@@ -22,6 +22,27 @@ interface ContractCase {
 
 const cases: ContractCase[] = [
 	{
+		name: "apps.domains.add — body goes through as given",
+		call: (c) => c.apps.domains.add(FAKE, { hostname: "example.com", www: false, port: 3000, path_prefix: "/api" }),
+		method: "POST",
+		path: `/v1/apps/${FAKE}/domains`,
+		body: { hostname: "example.com", www: false, port: 3000, path_prefix: "/api" },
+	},
+	{
+		name: "apps.domains.update — null clears redirect_to",
+		call: (c) => c.apps.domains.update(FAKE, FAKE2, { redirect_to: null, primary: true }),
+		method: "PATCH",
+		path: `/v1/apps/${FAKE}/domains/${FAKE2}`,
+		body: { redirect_to: null, primary: true },
+	},
+	{
+		name: "apps.domains.connect — no body",
+		call: (c) => c.apps.domains.connect(FAKE, FAKE2),
+		method: "POST",
+		path: `/v1/apps/${FAKE}/domains/${FAKE2}/connect`,
+		body: "none",
+	},
+	{
 		name: "workspaces.actionRequests.list — status is an optional query filter",
 		call: (c) => c.workspaces.actionRequests.list(FAKE, { status: "pending" }),
 		method: "GET",

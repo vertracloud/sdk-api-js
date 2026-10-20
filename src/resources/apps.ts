@@ -4,9 +4,10 @@ import { AppBuildFailedError, AppBuildTimeoutError } from "../errors.js";
 import type { SseEvent } from "../sse.js";
 import type {
 	APIApplication,
-	APIApplicationCustomDomain,
 	APIApplicationDeployment,
-	APIApplicationDnsRecord,
+	APIApplicationDomain,
+	APIApplicationDomainConnect,
+	APIApplicationDomainDnsRecord,
 	APIApplicationEnvironment,
 	APIApplicationFile,
 	APIApplicationFileContent,
@@ -28,8 +29,10 @@ import type {
 	FileListQuery,
 	PaginationMeta,
 	RESTDeleteAPIApplicationFileBody,
+	RESTPatchAPIApplicationDomainBody,
 	RESTPatchAPIApplicationFileMoveBody,
 	RESTPatchAPIApplicationUpdateConfigBody,
+	RESTPostAPIApplicationDomainBody,
 	RESTPostAPIApplicationEnvironmentBody,
 	RESTPostAPIApplicationRestartBody,
 	RESTPostAPIApplicationRollbackBody,
@@ -246,21 +249,30 @@ export class AppsResource {
 			this.client.request({ method: "POST", path: `/v1/apps/${encodePathSegment(id)}/releases/${encodePathSegment(releaseId)}/rollback`, query: withWorkspace(options), body: body ?? {}, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 	};
 
+	readonly domains = {
+		/** `GET /v1/apps/:id/domains` — scope `apps:read`. */
+		list: (id: string, options?: RequestOptions): Promise<APIApplicationDomain[]> => this.client.request({ method: "GET", path: `/v1/apps/${encodePathSegment(id)}/domains`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
+
+		/** `POST /v1/apps/:id/domains` — scope `apps:write`. Returns the created domain and its automatic `www`/root companion, when there is one. */
+		add: (id: string, body: RESTPostAPIApplicationDomainBody, options?: RequestOptions): Promise<APIApplicationDomain[]> => this.client.request({ method: "POST", path: `/v1/apps/${encodePathSegment(id)}/domains`, query: withWorkspace(options), body, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+
+		/** `PATCH /v1/apps/:id/domains/:domainId` — scope `apps:write`. Send only what changes; `null` clears `path_prefix` or `redirect_to`. */
+		update: (id: string, domainId: string, body: RESTPatchAPIApplicationDomainBody, options?: RequestOptions): Promise<APIApplicationDomain[]> =>
+			this.client.request({ method: "PATCH", path: `/v1/apps/${encodePathSegment(id)}/domains/${encodePathSegment(domainId)}`, query: withWorkspace(options), body, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+
+		/** `DELETE /v1/apps/:id/domains/:domainId` — scope `apps:write`. Removes the automatic companion together. */
+		remove: (id: string, domainId: string, options?: RequestOptions): Promise<void> => this.client.request({ method: "DELETE", path: `/v1/apps/${encodePathSegment(id)}/domains/${encodePathSegment(domainId)}`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
+
+		/** `GET /v1/apps/:id/domains/:domainId/dns` — scope `apps:read`. */
+		dns: (id: string, domainId: string, options?: RequestOptions): Promise<APIApplicationDomainDnsRecord[]> =>
+			this.client.request({ method: "GET", path: `/v1/apps/${encodePathSegment(id)}/domains/${encodePathSegment(domainId)}/dns`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
+
+		/** `POST /v1/apps/:id/domains/:domainId/connect` — scope `apps:write`. Fails with `DOMAIN_CONNECT_UNAVAILABLE` (404) when automatic setup is not available. */
+		connect: (id: string, domainId: string, options?: RequestOptions): Promise<APIApplicationDomainConnect> =>
+			this.client.request({ method: "POST", path: `/v1/apps/${encodePathSegment(id)}/domains/${encodePathSegment(domainId)}/connect`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
+	};
+
 	readonly network = {
-		customDomain: {
-			/** `GET /v1/apps/:id/network/custom` — scope `apps:read`. */
-			get: (id: string, options?: RequestOptions): Promise<APIApplicationCustomDomain> => this.client.request({ method: "GET", path: `/v1/apps/${encodePathSegment(id)}/network/custom`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
-
-			/** `POST /v1/apps/:id/network/custom` — scope `apps:write`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/network/customdomain */
-			set: (id: string, domain: string, options?: RequestOptions): Promise<APIApplicationCustomDomain> => this.client.request({ method: "POST", path: `/v1/apps/${encodePathSegment(id)}/network/custom`, query: withWorkspace(options), body: { domain }, signal: options?.signal, timeoutMs: options?.timeoutMs }),
-
-			/** `DELETE /v1/apps/:id/network/custom` — scope `apps:write`. */
-			remove: (id: string, options?: RequestOptions): Promise<void> => this.client.request({ method: "DELETE", path: `/v1/apps/${encodePathSegment(id)}/network/custom`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
-		},
-
-		/** `GET /v1/apps/:id/network/dns` — scope `apps:read`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/network/dns */
-		dns: (id: string, options?: RequestOptions): Promise<APIApplicationDnsRecord[]> => this.client.request({ method: "GET", path: `/v1/apps/${encodePathSegment(id)}/network/dns`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
-
 		/** `POST /v1/apps/:id/network/purge-cache` — scope `apps:write`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/network/purgecache */
 		purgeCache: (id: string, body?: { hostnames?: string[]; paths?: string[] }, options?: RequestOptions): Promise<void> =>
 			this.client.request({ method: "POST", path: `/v1/apps/${encodePathSegment(id)}/network/purge-cache`, query: withWorkspace(options), body: body ?? {}, signal: options?.signal, timeoutMs: options?.timeoutMs }),
