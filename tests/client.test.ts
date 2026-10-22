@@ -196,12 +196,13 @@ describe("VertraClient — query params", () => {
 describe("VertraClient — multipart", () => {
 	it("apps.create sends a multipart form with the file field and text fields", async () => {
 		const { client, calls } = makeClient();
-		await client.apps.create({ file: new Blob(["zip-bytes"]), name: "my-app", memory: 256, main: "index.js", version: "20" });
+		await client.apps.create({ file: new Blob(["zip-bytes"]), name: "my-app", memory: 256, main: "index.js", version: "20", language: "deno" });
 		const form = calls[0].init.body as FormData;
 		assert.ok(form instanceof FormData);
 		assert.equal(form.get("name"), "my-app");
 		assert.equal(form.get("memory"), "256");
 		assert.equal(form.get("main"), "index.js");
+		assert.equal(form.get("language"), "deno");
 		const file = form.get("file");
 		assert.ok(file instanceof Blob);
 	});
@@ -219,7 +220,6 @@ describe("VertraClient — multipart", () => {
 		const response = {
 			app_id: "app-1",
 			updated_at: "2026-09-22T12:00:00.000Z",
-			missing_dependencies: ["lodash"],
 			removed_directories: [".git"],
 		};
 		const { client } = makeClient({ jsonBody: { response } });

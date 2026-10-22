@@ -25,6 +25,7 @@ import type {
 	APIApplicationWebPublish,
 	APIApplicationWebhook,
 	APIApplicationWebhookUrl,
+	ApplicationLanguage,
 	FileContentQuery,
 	FileListQuery,
 	PaginationMeta,
@@ -52,6 +53,8 @@ export interface CreateAppOptions extends RequestOptions {
 	memory?: number;
 	main?: string;
 	version?: string;
+	/** Forces the language; without it the platform detects it from the project manifest. */
+	language?: ApplicationLanguage;
 	start?: string;
 	build?: string;
 	subdomain?: string;
@@ -140,6 +143,7 @@ export class AppsResource {
 		if (options.memory !== undefined) form.set("memory", String(options.memory));
 		if (options.main !== undefined) form.set("main", options.main);
 		if (options.version !== undefined) form.set("version", options.version);
+		if (options.language !== undefined) form.set("language", options.language);
 		if (options.start !== undefined) form.set("start", options.start);
 		if (options.build !== undefined) form.set("build", options.build);
 		if (options.subdomain !== undefined) form.set("subdomain", options.subdomain);
