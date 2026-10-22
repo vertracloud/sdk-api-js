@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/vertracloud/sdk-api-js/compare/v0.3.0...v0.3.1) (2026-10-22)
+
+
+### Features
+
+* **apps:** Deno, .NET and Elixir and language on create ([98f7b19](https://github.com/vertracloud/sdk-api-js/commit/98f7b194595679a2c65954ac57c518943d916225))
+
 ## [0.3.0](https://github.com/vertracloud/sdk-api-js/compare/v0.2.1...v0.3.0) (2026-10-22)
 
 
