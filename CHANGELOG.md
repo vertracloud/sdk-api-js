@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.3.0](https://github.com/vertracloud/sdk-api-js/compare/v0.2.1...v0.3.0) (2026-10-22)
+
+
+### ⚠ BREAKING CHANGES
+
+* plan names and multiple custom domains per app
+
+### Features
+
+* plan names and multiple custom domains per app ([816b8e9](https://github.com/vertracloud/sdk-api-js/commit/816b8e97a9ae2bc32e72e79e374d737ac4d2ec0e))
+
+
+### Bug Fixes
+
+* **deps:** lock @vertracloud/api-types 0.5.0 ([bc30074](https://github.com/vertracloud/sdk-api-js/commit/bc30074da9c6f06044e1668951c844cf6a065876))
+* keep the API key out of inspected client output ([5711289](https://github.com/vertracloud/sdk-api-js/commit/571128946023af31f76715c9edc606918011d4e7))
+* reject empty and dot path segments before sending a request ([597a439](https://github.com/vertracloud/sdk-api-js/commit/597a43992ab5ce416679bb824626ff738c5f1bbb))
+* reject the promise on an invalid path segment instead of throwing synchronously ([2812cda](https://github.com/vertracloud/sdk-api-js/commit/2812cda3330b41cff25dcda130f966ad0b60fd53))
+
 ## [0.2.1](https://github.com/vertracloud/sdk-api-js/compare/v0.2.0...v0.2.1) (2026-10-18)
 
 
