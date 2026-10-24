@@ -3,6 +3,7 @@ import { AccountResource } from "./resources/account.js";
 import { AppsResource } from "./resources/apps.js";
 import { BillingResource } from "./resources/billing.js";
 import { DatabasesResource } from "./resources/databases.js";
+import { ImagesResource } from "./resources/images.js";
 import { SnapshotsResource } from "./resources/snapshots.js";
 import { WorkspacesResource } from "./resources/workspaces.js";
 import { type SseEvent, parseSseStream } from "./sse.js";
@@ -119,6 +120,8 @@ export class VertraClient {
 
 	/** `apps.*` — see {@link AppsResource}. */
 	readonly apps: AppsResource;
+	/** `images.*` — see {@link ImagesResource}. */
+	readonly images: ImagesResource;
 	/** `databases.*` — see {@link DatabasesResource}. */
 	readonly databases: DatabasesResource;
 	/** `snapshots.*` — see {@link SnapshotsResource}. */
@@ -139,6 +142,7 @@ export class VertraClient {
 		this.fetchImpl = config.fetch ?? globalThis.fetch.bind(globalThis);
 
 		this.apps = new AppsResource(this);
+		this.images = new ImagesResource(this);
 		this.databases = new DatabasesResource(this);
 		this.snapshots = new SnapshotsResource(this);
 		this.account = new AccountResource(this);

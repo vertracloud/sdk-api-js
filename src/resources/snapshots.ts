@@ -11,6 +11,14 @@ export interface SnapshotOptions {
 	timeoutMs?: number;
 }
 
+export interface SnapshotRestoreOptions extends SnapshotOptions {
+	/**
+	 * Application on a custom Docker image: also go back to the image version it ran when the snapshot was taken, if that
+	 * version still exists. Absent = data only (the API default). When the version is gone, the response has `warning`.
+	 */
+	restoreImageVersion?: boolean;
+}
+
 /**
  * `snapshots.*` — one method per route under the `snapshots:*` scopes. Resources here are
  * identified by the **resource** id (an app or a database id), not a user id, despite the `:id`
@@ -46,12 +54,13 @@ export class SnapshotsResource {
 		return this.client.request({ method: "POST", path: `/v1/users/${deferredPathSegment(resourceId)}/snapshots`, query: { scope: options.scope }, signal: options.signal, timeoutMs: options.timeoutMs });
 	}
 
-	/** `POST /v1/users/:id/snapshots/:snapshot_id/restore` — scope `snapshots:write`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/commits/revert */
-	restore(resourceId: string, snapshotId: string, options: SnapshotOptions): Promise<APISnapshotRestoreResponse> {
+	/** `POST /v1/users/:id/snapshots/:snapshot_id/restore` — scope `snapshots:write`. For database snapshots it can fail with `SNAPSHOT_VERSION_NEWER`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/commits/revert */
+	restore(resourceId: string, snapshotId: string, options: SnapshotRestoreOptions): Promise<APISnapshotRestoreResponse> {
 		return this.client.request({
 			method: "POST",
 			path: `/v1/users/${deferredPathSegment(resourceId)}/snapshots/${deferredPathSegment(snapshotId)}/restore`,
 			query: { scope: options.scope },
+			body: options.restoreImageVersion === undefined ? undefined : { restore_image_version: options.restoreImageVersion },
 			signal: options.signal,
 			timeoutMs: options.timeoutMs,
 		});

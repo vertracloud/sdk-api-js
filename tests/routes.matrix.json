@@ -173,6 +173,10 @@
 	},
 	{
 		"method": "GET",
+		"path": "/v1/databases/versions"
+	},
+	{
+		"method": "GET",
 		"path": "/v1/orders"
 	},
 	{
@@ -426,5 +430,57 @@
 	{
 		"method": "PUT",
 		"path": "/v1/workspaces/:id/roles/:role_id"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/images"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/images"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/images/:image_id"
+	},
+	{
+		"method": "PATCH",
+		"path": "/v1/images/:image_id"
+	},
+	{
+		"method": "PUT",
+		"path": "/v1/images/:image_id"
+	},
+	{
+		"method": "DELETE",
+		"path": "/v1/images/:image_id"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/images/:image_id/versions"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/images/:image_id/logs"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/images/:image_id/context"
+	},
+	{
+		"method": "PUT",
+		"path": "/v1/images/:image_id/github"
+	},
+	{
+		"method": "DELETE",
+		"path": "/v1/images/:image_id/github"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/images/check"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/apps/image"
 	}
 ]

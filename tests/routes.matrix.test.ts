@@ -34,7 +34,7 @@ function expectedPath(template: string): string {
 }
 
 const expectedRoutes = new Set(matrix.map((r) => `${r.method} ${expectedPath(r.path)}`));
-assert.equal(expectedRoutes.size, 107, "fixture must have exactly 107 unique routes");
+assert.equal(expectedRoutes.size, 121, "fixture must have exactly 121 unique routes");
 
 // The fixture must be exactly the public API key catalog — a route added to or dropped from the
 // catalog fails here until the SDK follows. Blob Storage routes belong to `@vertracloud/blob`.
@@ -45,8 +45,8 @@ const catalogRoutes = new Set(
 );
 assert.deepEqual(new Set(matrix.map((r) => `${r.method} ${r.path}`)), catalogRoutes, "fixture must match API_KEY_SCOPES");
 
-describe("routes matrix — every SDK method maps to exactly one of the 107 frozen routes", () => {
-	it("(a)+(b): calling every resource method hits exactly the 107 expected method+path pairs, nothing else", async () => {
+describe("routes matrix — every SDK method maps to exactly one of the 121 frozen routes", () => {
+	it("(a)+(b): calling every resource method hits exactly the 121 expected method+path pairs, nothing else", async () => {
 		const captured: { method: string; path: string }[] = [];
 		const fetchImpl = makeMockFetch([], { jsonBody: { response: {} } });
 		const client = new VertraClient({
@@ -104,7 +104,10 @@ describe("routes matrix — every SDK method maps to exactly one of the 107 froz
 		await client.apps.files.delete(FAKE, { path: "/a" });
 		await client.apps.files.upload(FAKE, blob, "a.txt");
 
+		await client.apps.createFromImage({ image_id: FAKE, name: "n", memory: 256, web: false });
+
 		await client.databases.statusAll();
+		await client.databases.versions();
 		await client.databases.get(FAKE);
 		await client.databases.status(FAKE);
 		await client.databases.metrics(FAKE);
@@ -174,6 +177,20 @@ describe("routes matrix — every SDK method maps to exactly one of the 107 froz
 		await client.billing.updateDetails({ name: "x", address: { line1: "x", number: null, line2: null, district: null, city: "x", city_code: null, state: null, postal_code: null, country: "US" } });
 		await client.billing.redeem(FAKE);
 
+		await client.images.list();
+		await client.images.create({ name: "n", file: blob });
+		await client.images.create({ name: "n", github: { repository: "o/r", branch: "main" } });
+		await client.images.get(FAKE);
+		await client.images.update(FAKE, { name: "n" });
+		await client.images.rebuild(FAKE, blob);
+		await client.images.delete(FAKE, { confirmName: "n" });
+		await client.images.versions(FAKE);
+		await client.images.logs(FAKE).next();
+		await client.images.context(FAKE);
+		await client.images.linkGitHub(FAKE, { repository: "o/r", branch: "main" });
+		await client.images.unlinkGitHub(FAKE);
+		await client.images.check({ dockerfile: "FROM alpine", files: ["Dockerfile"] });
+
 		noop();
 
 		const capturedSet = new Set(captured.map((c) => `${c.method} ${c.path}`));
@@ -184,9 +201,9 @@ describe("routes matrix — every SDK method maps to exactly one of the 107 froz
 		}
 		// (b) nothing outside the fixture was hit
 		for (const call of capturedSet) {
-			assert.ok(expectedRoutes.has(call), `unexpected call outside the 107-route matrix: ${call}`);
+			assert.ok(expectedRoutes.has(call), `unexpected call outside the 121-route matrix: ${call}`);
 		}
-		assert.equal(capturedSet.size, 107);
+		assert.equal(capturedSet.size, 121);
 	});
 });
 

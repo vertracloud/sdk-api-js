@@ -118,6 +118,42 @@ for await (const event of client.apps.realtime(appId)) {
 
 Stop the stream with `break` or an `AbortSignal`. Pass `idleTimeoutMs` to also stop when no event arrives in time, and `since` to resume. There is no automatic reconnection.
 
+### Custom images
+
+An image is a build context with a `Dockerfile`. Create it from a ZIP file or from a GitHub repository, then run apps from it. Builds run in the background: `create` returns with `status: "building"`.
+
+```ts
+const image = await client.images.create({ name: "api", description: "Node 22 base", file: await openAsBlob("api.zip") });
+// or: client.images.create({ name: "api", github: { repository: "acme/api", branch: "main" } })
+// `branch` is optional (default: the repository's default branch). A repository in your GitHub App installations is linked and
+// each push rebuilds the image; a public repository outside them is built once, with no link.
+
+// Lines of the build log; the stream follows the build until it ends.
+for await (const line of client.images.logs(image.id)) console.log(line);
+
+const app = await client.apps.createFromImage({ image_id: image.id, name: "api", memory: 512, web: true, subdomain: "random" });
+await client.apps.waitUntilReady(app.id);
+```
+
+`description` is optional (up to 128 characters). `images.update` renames the image and/or changes its description without building anything; apps keep running. Send only what changes, and `description: null` removes it:
+
+```ts
+await client.images.update(image.id, { name: "api-base", description: null });
+```
+
+`images.delete` needs `confirmName`, the image's name, and also deletes every app created from it. Pass `workspaceId` to act on an image that belongs to a workspace. A refused `Dockerfile` throws `DockerfileRefusedError`, whose `issues` lists what blocked the build.
+
+### Database versions
+
+```ts
+// Versions available per engine type (keys are the database `type`)
+const catalog = await client.databases.versions();
+const db = await client.databases.create({ name: "meu-db", type: 1, ram: 512, version: catalog[1].recommended });
+console.log(db.version); // major line, e.g. "18"
+```
+
+Omit `version` to get the recommended one; with `snapshot_id`, omit it to keep the snapshot's line (an older one fails with `SNAPSHOT_VERSION_NEWER`; an unknown one with `INVALID_DATABASE_VERSION`). A database's version cannot be changed after creation; security updates are applied when it is stopped and started.
+
 ### Errors
 
 Every non-2xx response throws a `VertraAPIError` carrying the HTTP `status`, the API `code` (e.g. `APP_NOT_FOUND`), `message` and `details`. The API key is never part of the error, even when it is logged:
@@ -177,8 +213,9 @@ const client = new VertraClient({ apiKey: "test", fetch: myFakeFetch });
 
 | Domain | Resource | Routes |
 |---|---|---|
-| Apps | `client.apps` (+ `.deploys`, `.releases`, `.domains`, `.network`, `.envs`, `.files`) | 42 |
-| Databases | `client.databases` (+ `.credentials`) | 13 |
+| Apps | `client.apps` (+ `.deploys`, `.releases`, `.domains`, `.network`, `.envs`, `.files`) | 43 |
+| Images | `client.images` | 12 |
+| Databases | `client.databases` (+ `.credentials`) | 14 |
 | Snapshots | `client.snapshots` | 5 |
 | Account | `client.account` (+ `.sessions`, `.folders`, `.favorites`) | 10 |
 | Workspaces | `client.workspaces` (+ `.members`, `.roles`, `.invites`, `.actionRequests`, `.apps`, `.databases`, `.folders`, `.favorites`) | 30 |

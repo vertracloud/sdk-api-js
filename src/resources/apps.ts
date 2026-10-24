@@ -35,8 +35,10 @@ import type {
 	RESTPatchAPIApplicationUpdateConfigBody,
 	RESTPostAPIApplicationDomainBody,
 	RESTPostAPIApplicationEnvironmentBody,
+	RESTPostAPIApplicationImageBody,
 	RESTPostAPIApplicationRestartBody,
 	RESTPostAPIApplicationRollbackBody,
+	RESTPostAPIApplicationWebPublishBody,
 	RESTPostAPIApplicationWebhookCreateBody,
 	RESTPutAPIApplicationFileBody,
 	RequestOptions,
@@ -150,6 +152,15 @@ export class AppsResource {
 		if (options.workspaceId !== undefined) form.set("workspace_id", options.workspaceId);
 		if (options.envs !== undefined) form.set("envs", JSON.stringify(options.envs));
 		return this.client.request({ method: "POST", path: "/v1/apps", form, signal: options.signal, timeoutMs: options.timeoutMs ?? 60_000 });
+	}
+
+	/**
+	 * `POST /v1/apps/image` — scope `apps:write`. Creates an app from a custom image (see `client.images`).
+	 * Asynchronous like `create`: returns with `status: "building"` (HTTP 202); follow it with `waitUntilReady`.
+	 * The workspace, when there is one, goes in `body.workspace_id`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/create-from-image
+	 */
+	createFromImage(body: RESTPostAPIApplicationImageBody, options?: Omit<RequestOptions, "workspaceId">): Promise<APIApplication> {
+		return this.client.request({ method: "POST", path: "/v1/apps/image", body, signal: options?.signal, timeoutMs: options?.timeoutMs });
 	}
 
 	/**
@@ -286,8 +297,8 @@ export class AppsResource {
 		setSubdomain: (id: string, subdomain: string, options?: RequestOptions): Promise<APIApplicationSubdomain> =>
 			this.client.request({ method: "PATCH", path: `/v1/apps/${deferredPathSegment(id)}/network/subdomain`, query: withWorkspace(options), body: { subdomain }, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
-		/** `POST /v1/apps/:id/network/publish` — scope `apps:write`. `subdomain` omitted = platform picks one. @see https://docs.vertracloud.app/api-reference/endpoint/apps/network/publish */
-		publish: (id: string, body?: { subdomain?: string }, options?: RequestOptions): Promise<APIApplicationWebPublish> =>
+		/** `POST /v1/apps/:id/network/publish` — scope `apps:write`. `subdomain` omitted = platform picks one. `port` (only for an app on a custom image) is the port the image listens on. @see https://docs.vertracloud.app/api-reference/endpoint/apps/network/publish */
+		publish: (id: string, body?: RESTPostAPIApplicationWebPublishBody, options?: RequestOptions): Promise<APIApplicationWebPublish> =>
 			this.client.request({ method: "POST", path: `/v1/apps/${deferredPathSegment(id)}/network/publish`, query: withWorkspace(options), body: body ?? {}, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
 		/** `DELETE /v1/apps/:id/network/publish` — scope `apps:write`. */

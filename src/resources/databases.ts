@@ -1,6 +1,6 @@
 import type { VertraClient } from "../client.js";
 import { deferredPathSegment } from "../client.js";
-import type { APIDatabase, APIDatabaseCertificate, APIDatabaseMetrics, APIDatabaseOperationResponse, APIDatabasePasswordReset, APIDatabaseStatus, APIDatabaseStatusShort, DatabaseType, RequestOptions } from "../types.js";
+import type { APIDatabase, APIDatabaseCertificate, APIDatabaseMetrics, APIDatabaseOperationResponse, APIDatabasePasswordReset, APIDatabaseStatus, APIDatabaseStatusShort, APIDatabaseVersions, DatabaseType, RequestOptions } from "../types.js";
 
 export interface CreateDatabaseBody {
 	name: string;
@@ -9,6 +9,8 @@ export interface CreateDatabaseBody {
 	ram: number;
 	workspace_id?: string;
 	snapshot_id?: string;
+	/** Engine major line (see `databases.versions()`); omitted, the recommended one is used. With `snapshot_id` leave it out to keep the snapshot's line; an older one fails with `SNAPSHOT_VERSION_NEWER`. Invalid values fail with `INVALID_DATABASE_VERSION`. */
+	version?: string;
 }
 
 /**
@@ -21,6 +23,11 @@ export class DatabasesResource {
 	/** `GET /v1/databases/status` — scope `databases:read`. @see https://docs.vertracloud.app/api-reference/endpoint/databases/allstatus */
 	statusAll(options?: RequestOptions): Promise<APIDatabaseStatusShort[]> {
 		return this.client.request({ method: "GET", path: "/v1/databases/status", query: { workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs });
+	}
+
+	/** `GET /v1/databases/versions` — scope `databases:read`. Catalog keyed by engine `type`: `recommended` and `available` lines for new databases. @see https://docs.vertracloud.app/api-reference/endpoint/databases/versions */
+	versions(options?: RequestOptions): Promise<APIDatabaseVersions> {
+		return this.client.request({ method: "GET", path: "/v1/databases/versions", signal: options?.signal, timeoutMs: options?.timeoutMs });
 	}
 
 	/** `GET /v1/databases/:id` — scope `databases:read`. @see https://docs.vertracloud.app/api-reference/endpoint/databases/get */

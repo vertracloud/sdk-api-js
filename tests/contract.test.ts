@@ -64,6 +64,13 @@ const cases: ContractCase[] = [
 		body: { owner: "octocat", repo_name: "hello-world", repo_id: "123", account_id: "456" },
 	},
 	{
+		name: "apps.deploys.webhook.create — optional branch is sent as-is",
+		call: (c) => c.apps.deploys.webhook.create(FAKE, { owner: "octocat", repo_name: "hello-world", repo_id: "123", account_id: "456", branch: "release" }),
+		method: "POST",
+		path: `/v1/apps/${FAKE}/deploys/webhook`,
+		body: { owner: "octocat", repo_name: "hello-world", repo_id: "123", account_id: "456", branch: "release" },
+	},
+	{
 		name: "snapshots.listAll — scope is a required query param",
 		call: (c) => c.snapshots.listAll({ scope: "databases" }),
 		method: "GET",
@@ -104,6 +111,19 @@ const cases: ContractCase[] = [
 		method: "POST",
 		path: "/v1/databases",
 		body: { name: "meu-db", type: 1, ram: 512 },
+	},
+	{
+		name: "databases.create — optional engine version is sent as-is",
+		call: (c) => c.databases.create({ name: "meu-db", type: 1, ram: 512, version: "17" }),
+		method: "POST",
+		path: "/v1/databases",
+		body: { name: "meu-db", type: 1, ram: 512, version: "17" },
+	},
+	{
+		name: "databases.versions — catalog route, no id",
+		call: (c) => c.databases.versions(),
+		method: "GET",
+		path: "/v1/databases/versions",
 	},
 	{
 		name: "databases.update — name/description/ram only, no plan field",
@@ -232,6 +252,84 @@ const cases: ContractCase[] = [
 		path: `/v1/workspaces/${FAKE}/folders/${FAKE2}/resources/application/${FAKE3}`,
 		body: { position: 2 },
 	},
+	{
+		name: "images.list — no query, no body",
+		call: (c) => c.images.list(),
+		method: "GET",
+		path: "/v1/images",
+		body: "none",
+	},
+	{
+		name: "images.versions — GET under the image",
+		call: (c) => c.images.versions(FAKE),
+		method: "GET",
+		path: `/v1/images/${FAKE}/versions`,
+		body: "none",
+	},
+	{
+		name: "images.logs — version_id is an optional query filter",
+		call: (c) => c.images.logs(FAKE, { versionId: FAKE2 }).next(),
+		method: "GET",
+		path: `/v1/images/${FAKE}/logs`,
+		query: { version_id: FAKE2 },
+		body: "none",
+	},
+	{
+		name: "images.context — GET returns a temporary download url",
+		call: (c) => c.images.context(FAKE),
+		method: "GET",
+		path: `/v1/images/${FAKE}/context`,
+		body: "none",
+	},
+	{
+		name: "images.update — only the given fields go in the JSON body",
+		call: (c) => c.images.update(FAKE, { name: "api-v2" }),
+		method: "PATCH",
+		path: `/v1/images/${FAKE}`,
+		body: { name: "api-v2" },
+	},
+	{
+		name: "images.update — null description is sent to clear it",
+		call: (c) => c.images.update(FAKE, { description: null }),
+		method: "PATCH",
+		path: `/v1/images/${FAKE}`,
+		body: { description: null },
+	},
+	{
+		name: "images.delete — confirm_name is the only body field",
+		call: (c) => c.images.delete(FAKE, { confirmName: "api" }),
+		method: "DELETE",
+		path: `/v1/images/${FAKE}`,
+		body: { confirm_name: "api" },
+	},
+	{
+		name: "images.linkGitHub — repository and branch in the body",
+		call: (c) => c.images.linkGitHub(FAKE, { repository: "acme/api", branch: "main" }),
+		method: "PUT",
+		path: `/v1/images/${FAKE}/github`,
+		body: { repository: "acme/api", branch: "main" },
+	},
+	{
+		name: "images.unlinkGitHub — no body",
+		call: (c) => c.images.unlinkGitHub(FAKE),
+		method: "DELETE",
+		path: `/v1/images/${FAKE}/github`,
+		body: "none",
+	},
+	{
+		name: "images.check — dockerfile and files in the JSON body, no workspace",
+		call: (c) => c.images.check({ dockerfile: "FROM alpine", files: ["Dockerfile", "app.js"] }),
+		method: "POST",
+		path: "/v1/images/check",
+		body: { dockerfile: "FROM alpine", files: ["Dockerfile", "app.js"] },
+	},
+	{
+		name: "apps.createFromImage — JSON body carries workspace_id, no query",
+		call: (c) => c.apps.createFromImage({ image_id: FAKE, name: "api", memory: 256, web: true, subdomain: "random", port: 8080, workspace_id: FAKE2 }),
+		method: "POST",
+		path: "/v1/apps/image",
+		body: { image_id: FAKE, name: "api", memory: 256, web: true, subdomain: "random", port: 8080, workspace_id: FAKE2 },
+	},
 ];
 
 function parseBody(init: RequestInit): unknown {
@@ -309,5 +407,42 @@ describe("contract — multipart field names", () => {
 		const form = calls[0]?.init.body as FormData;
 		assert.deepEqual([...form.keys()].sort(), ["file", "message"]);
 		assert.equal(form.get("message"), "fix login");
+	});
+});
+
+describe("contract — image multipart field names", () => {
+	it("images.create — file source: name and file parts only", async () => {
+		const calls: CapturedCall[] = [];
+		const { client } = makeClient({ jsonBody: { response: {} } }, calls);
+		await client.images.create({ name: "api", file: new Blob(["zip-bytes"]) });
+
+		const form = calls[0]?.init.body as FormData;
+		assert.ok(form instanceof FormData);
+		assert.deepEqual([...form.keys()].sort(), ["file", "name"]);
+	});
+
+	it("images.create — github source: repository and branch as text parts, no file part", async () => {
+		const calls: CapturedCall[] = [];
+		const { client } = makeClient({ jsonBody: { response: {} } }, calls);
+		await client.images.create({ name: "api", github: { repository: "acme/api", branch: "main" }, workspaceId: FAKE2 });
+
+		const form = calls[0]?.init.body as FormData;
+		assert.ok(form instanceof FormData);
+		assert.deepEqual([...form.keys()].sort(), ["github_branch", "github_repository", "name", "workspace_id"]);
+		assert.equal(form.get("github_repository"), "acme/api");
+		assert.equal(form.get("github_branch"), "main");
+		assert.equal(form.has("file"), false);
+	});
+
+	it("images.rebuild — PUT with the file part only", async () => {
+		const calls: CapturedCall[] = [];
+		const { client } = makeClient({ jsonBody: { response: {} } }, calls);
+		await client.images.rebuild(FAKE, new Blob(["zip-bytes"]));
+
+		assert.equal(calls[0]?.init.method, "PUT");
+		assert.equal(calls[0]?.url.pathname, `/v1/images/${FAKE}`);
+		const form = calls[0]?.init.body as FormData;
+		assert.ok(form instanceof FormData);
+		assert.deepEqual([...form.keys()], ["file"]);
 	});
 });

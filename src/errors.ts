@@ -1,4 +1,4 @@
-import type { APIApplication } from "@vertracloud/api-types/v1";
+import type { APIApplication, DockerfileIssue, DockerfileIssueCode } from "@vertracloud/api-types/v1";
 
 /**
  * Error envelope shape sent by the Vertra Cloud API on any non-2xx response:
@@ -55,6 +55,37 @@ export class NotFoundError extends VertraAPIError {}
 export class ValidationError extends VertraAPIError {}
 
 /**
+ * 400 `DOCKERFILE_REFUSED` on an image build. `issues` lists the findings that blocked it, read from `details.issues`.
+ * Tolerant: a body without a readable list gives an empty array, and codes unknown to this SDK are kept as sent.
+ */
+export class DockerfileRefusedError extends ValidationError {
+	readonly issues: DockerfileIssue[];
+
+	constructor(status: number, body: VertraAPIErrorBody) {
+		super(status, body);
+		this.issues = readDockerfileIssues(body.details);
+	}
+
+	override toJSON(): ReturnType<VertraAPIError["toJSON"]> & { issues: DockerfileIssue[] } {
+		return { ...super.toJSON(), issues: this.issues };
+	}
+}
+
+function readDockerfileIssues(details: unknown): DockerfileIssue[] {
+	if (typeof details !== "object" || details === null) return [];
+	const list = (details as { issues?: unknown }).issues;
+	if (!Array.isArray(list)) return [];
+	const issues: DockerfileIssue[] = [];
+	for (const item of list) {
+		if (typeof item !== "object" || item === null) continue;
+		const { code, line } = item as { code?: unknown; line?: unknown };
+		if (typeof code !== "string") continue;
+		issues.push({ code: code as DockerfileIssueCode, line: typeof line === "number" ? line : null });
+	}
+	return issues;
+}
+
+/**
  * 429 — rate limit or daily quota exceeded. `retryAfter` (seconds) is read from `body.retry_after`
  * first, falling back to the `retry-after` response header.
  */
@@ -84,6 +115,8 @@ export function buildAPIError(status: number, body: VertraAPIErrorBody, retryAft
 		case 404:
 			return new NotFoundError(status, body);
 		case 400:
+			if (body.code === "DOCKERFILE_REFUSED") return new DockerfileRefusedError(status, body);
+			return new ValidationError(status, body);
 		case 422:
 			return new ValidationError(status, body);
 		case 429:
