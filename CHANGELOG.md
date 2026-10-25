@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.2](https://github.com/vertracloud/sdk-api-js/compare/v0.3.1...v0.3.2) (2026-10-25)
+
+
+### Features
+
+* add images resource and database engine versions ([822a9f9](https://github.com/vertracloud/sdk-api-js/commit/822a9f97e5743f49debfaa0aca3b2c8d0cb2ad40))
+
 ## [0.3.1](https://github.com/vertracloud/sdk-api-js/compare/v0.3.0...v0.3.1) (2026-10-22)
 
 
