@@ -51,7 +51,7 @@ function contextFileName(file: Blob): string {
 }
 
 /**
- * `images.*` — custom Docker images, under the `images:read` and `images:write` scopes.
+ * `images.*` — custom Docker images, under the `images:read`, `images:write` and `images:delete` scopes.
  * @see https://docs.vertracloud.app/api-reference
  */
 export class ImagesResource {
@@ -111,7 +111,7 @@ export class ImagesResource {
 	}
 
 	/**
-	 * `DELETE /v1/images/:id` — scope `images:write`. Deletes the image, its versions and every app created from it.
+	 * `DELETE /v1/images/:id` — scope `images:delete`. Deletes the image, its versions and every app created from it.
 	 * `confirmName` must equal the image name. Returns the ids of the apps deleted with it.
 	 * When the image has apps, the key also needs the `apps:delete` scope.
 	 * @see https://docs.vertracloud.app/api-reference/endpoint/images/delete
