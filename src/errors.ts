@@ -1,4 +1,4 @@
-import type { APIApplication, DockerfileIssue, DockerfileIssueCode } from "@vertracloud/api-types/v1";
+import type { APIApplication, APITemplateDetachConfirmationDetails, APITemplateUpdateBlocked, APITemplateValidationIssue, DockerfileIssue, DockerfileIssueCode } from "@vertracloud/api-types/v1";
 
 /**
  * Error envelope shape sent by the Vertra Cloud API on any non-2xx response:
@@ -154,4 +154,51 @@ export class AppBuildTimeoutError extends Error {
 		this.name = "AppBuildTimeoutError";
 		Object.setPrototypeOf(this, new.target.prototype);
 	}
+}
+
+// ---------------------------------------------------------------------------
+// Readers for the `details` of the template errors
+// ---------------------------------------------------------------------------
+
+/** `details` of `error` when it is an API error with the given `code`; `undefined` for anything else. Unreadable details give `{}`. */
+function detailsOfCode(error: unknown, code: string): Record<string, unknown> | undefined {
+	if (!(error instanceof VertraAPIError) || error.code !== code) return undefined;
+	return typeof error.details === "object" && error.details !== null ? (error.details as Record<string, unknown>) : {};
+}
+
+/**
+ * Findings of a `TEMPLATE_MANIFEST_INVALID` error (from `templates.create`, `templates.newVersion`, `templates.fromApp`, ...).
+ * `undefined` for any other error; an empty array when the error carries no readable list.
+ */
+export function templateManifestIssues(error: unknown): APITemplateValidationIssue[] | undefined {
+	const details = detailsOfCode(error, "TEMPLATE_MANIFEST_INVALID");
+	if (!details) return undefined;
+	return Array.isArray(details.issues) ? (details.issues as APITemplateValidationIssue[]) : [];
+}
+
+/**
+ * Paths of a `TEMPLATE_SECRET_IN_SOURCE` error: the files of the code sent to become a template that hold a secret.
+ * `undefined` for any other error.
+ */
+export function templateSecretFiles(error: unknown): string[] | undefined {
+	const details = detailsOfCode(error, "TEMPLATE_SECRET_IN_SOURCE");
+	if (!details) return undefined;
+	return Array.isArray(details.files) ? details.files.filter((file): file is string => typeof file === "string") : [];
+}
+
+/** Reason of a `TEMPLATE_UPDATE_BLOCKED` error (`details.reason`). `undefined` for any other error, or when the reason is missing. */
+export function templateUpdateBlockedDetails(error: unknown): APITemplateUpdateBlocked | undefined {
+	const details = detailsOfCode(error, "TEMPLATE_UPDATE_BLOCKED");
+	if (!details || typeof details.reason !== "string") return undefined;
+	return details as unknown as APITemplateUpdateBlocked;
+}
+
+/**
+ * Action of a `TEMPLATE_DETACH_CONFIRMATION_REQUIRED` error: repeat the call with `confirm_detach: true` (`confirmDetach: true` on
+ * `files.upload`) to detach the application from its template. `undefined` for any other error, or when the action is missing.
+ */
+export function templateDetachConfirmation(error: unknown): APITemplateDetachConfirmationDetails["action"] | undefined {
+	const details = detailsOfCode(error, "TEMPLATE_DETACH_CONFIRMATION_REQUIRED");
+	if (!details || typeof details.action !== "string") return undefined;
+	return details.action as APITemplateDetachConfirmationDetails["action"];
 }

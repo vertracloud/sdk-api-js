@@ -5,6 +5,8 @@ import { BillingResource } from "./resources/billing.js";
 import { DatabasesResource } from "./resources/databases.js";
 import { ImagesResource } from "./resources/images.js";
 import { SnapshotsResource } from "./resources/snapshots.js";
+import { StacksResource } from "./resources/stacks.js";
+import { TemplatesResource } from "./resources/templates.js";
 import { WorkspacesResource } from "./resources/workspaces.js";
 import { type SseEvent, parseSseStream } from "./sse.js";
 
@@ -34,6 +36,8 @@ export interface RequestConfig {
 	query?: QueryParams;
 	body?: unknown;
 	form?: FormData;
+	/** Extra request headers (e.g. `Idempotency-Key`). They never override `Authorization` or `User-Agent`. */
+	headers?: Record<string, string>;
 	signal?: AbortSignal;
 	timeoutMs?: number;
 }
@@ -124,6 +128,10 @@ export class VertraClient {
 	readonly images: ImagesResource;
 	/** `databases.*` — see {@link DatabasesResource}. */
 	readonly databases: DatabasesResource;
+	/** `templates.*` — see {@link TemplatesResource}. */
+	readonly templates: TemplatesResource;
+	/** `stacks.*` — see {@link StacksResource}. */
+	readonly stacks: StacksResource;
 	/** `snapshots.*` — see {@link SnapshotsResource}. */
 	readonly snapshots: SnapshotsResource;
 	/** `account.*` — see {@link AccountResource}. */
@@ -144,6 +152,8 @@ export class VertraClient {
 		this.apps = new AppsResource(this);
 		this.images = new ImagesResource(this);
 		this.databases = new DatabasesResource(this);
+		this.templates = new TemplatesResource(this);
+		this.stacks = new StacksResource(this);
 		this.snapshots = new SnapshotsResource(this);
 		this.account = new AccountResource(this);
 		this.workspaces = new WorkspacesResource(this);
@@ -227,7 +237,7 @@ export class VertraClient {
 		assertValidPath(config.path);
 		const timeoutMs = config.timeoutMs ?? this.timeoutMs;
 		const { signal, cleanup } = this.combineSignal(config.signal, timeoutMs);
-		const headers = this.headers(extraHeaders);
+		const headers = this.headers({ ...config.headers, ...extraHeaders });
 		if (contentType) headers.set("Content-Type", contentType);
 
 		const url = buildUrl(this.baseUrl, config.path, config.query);

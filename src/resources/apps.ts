@@ -327,7 +327,13 @@ export class AppsResource {
 		read: (id: string, query: FileContentQuery, options?: RequestOptions): Promise<APIApplicationFileContent> =>
 			this.client.request({ method: "GET", path: `/v1/apps/${deferredPathSegment(id)}/files/content`, query: { ...query, workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
-		/** `PUT /v1/apps/:id/files` — scope `apps:files`. */
+		/**
+		 * `PUT /v1/apps/:id/files` — scope `apps:files`. An application that came from an open template stops receiving versions of it when its
+		 * code is changed: without `confirm_detach: true` in the body the call fails with `409 TEMPLATE_DETACH_CONFIRMATION_REQUIRED` and changes
+		 * nothing (read the action with `templateDetachConfirmation(error)`); with it the change is made and the application is detached. Ignored
+		 * for an application that does not come from a template. The same `confirm_detach` exists on `files.move`, `files.delete`,
+		 * `deploys.webhook.create` and, as `confirmDetach`, on `files.upload`.
+		 */
 		write: (id: string, body: RESTPutAPIApplicationFileBody, options?: RequestOptions): Promise<void> => this.client.request({ method: "PUT", path: `/v1/apps/${deferredPathSegment(id)}/files`, body: { ...body, workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
 		/** `PATCH /v1/apps/:id/files` — scope `apps:files`. Moves/renames a file. */
@@ -342,15 +348,16 @@ export class AppsResource {
 		 * `options.path` is the destination folder inside the app; omitted or empty means the root.
 		 * A ZIP is extracted into that folder; any other file is written to `path/<filename>`.
 		 * `options.message` is the commit message shown in the release history (up to 500 characters).
+		 * `options.confirmDetach` confirms that the change detaches an application that came from an open template (see `files.write`).
 		 */
-		upload: (id: string, file: Blob, filename: string, options?: RequestOptions & { restart?: boolean; path?: string; message?: string }): Promise<APIApplicationFileUpload> => {
+		upload: (id: string, file: Blob, filename: string, options?: RequestOptions & { restart?: boolean; path?: string; message?: string; confirmDetach?: boolean }): Promise<APIApplicationFileUpload> => {
 			const form = new FormData();
 			form.set("file", file, filename);
 			if (options?.message !== undefined) form.set("message", options.message);
 			return this.client.request({
 				method: "POST",
 				path: `/v1/apps/${deferredPathSegment(id)}/files/upload`,
-				query: { restart: options?.restart, path: options?.path, workspace_id: options?.workspaceId },
+				query: { restart: options?.restart, path: options?.path, confirm_detach: options?.confirmDetach ? true : undefined, workspace_id: options?.workspaceId },
 				form,
 				signal: options?.signal,
 				timeoutMs: options?.timeoutMs ?? 120_000,

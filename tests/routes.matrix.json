@@ -482,5 +482,229 @@
 	{
 		"method": "POST",
 		"path": "/v1/apps/image"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/apps/:id/template/detach"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/workspaces/:id/templates/:template_id"
+	},
+	{
+		"method": "DELETE",
+		"path": "/v1/workspaces/:id/templates/:template_id"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/workspaces/:id/stacks/:stack_id"
+	},
+	{
+		"method": "DELETE",
+		"path": "/v1/workspaces/:id/stacks/:stack_id"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/templates"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/templates/categories"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/templates/:template_id"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/templates/:template_id/versions"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/templates/validate"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/templates/:template_id/share-links"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/share/templates/:token"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/apps/:id/template/update"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/stacks/:stack_id/template/update"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/templates"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/templates/from-app/:app_id"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/templates/from-app/:app_id/draft"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/templates/from-stack/:stack_id"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/templates/from-stack/:stack_id/draft"
+	},
+	{
+		"method": "PATCH",
+		"path": "/v1/templates/:template_id"
+	},
+	{
+		"method": "DELETE",
+		"path": "/v1/templates/:template_id"
+	},
+	{
+		"method": "PUT",
+		"path": "/v1/templates/:template_id/github"
+	},
+	{
+		"method": "DELETE",
+		"path": "/v1/templates/:template_id/github"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/templates/:template_id/versions"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/templates/:template_id/share-links"
+	},
+	{
+		"method": "DELETE",
+		"path": "/v1/templates/:template_id/share-links/:link_id"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/share/templates/:token/copy"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/share/templates/:token/report"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/apps/:id/template/report"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/templates/:template_id/deploy"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/share/templates/:token/deploy"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/template-deploys/:deploy_id"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/template-deploys/:deploy_id/events"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/apps/:id/template/update"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/stacks/:stack_id/template/update"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/stacks"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/stacks/:stack_id"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/stacks/:stack_id/bindings"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/stacks/:stack_id/connection"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/stacks/:stack_id/snapshots"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/stacks"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/stacks/transform"
+	},
+	{
+		"method": "PATCH",
+		"path": "/v1/stacks/:stack_id"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/stacks/:stack_id/members"
+	},
+	{
+		"method": "DELETE",
+		"path": "/v1/stacks/:stack_id/members/:resource_type/:resource_id"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/stacks/:stack_id/bindings"
+	},
+	{
+		"method": "PATCH",
+		"path": "/v1/stacks/:stack_id/bindings/:binding_id"
+	},
+	{
+		"method": "DELETE",
+		"path": "/v1/stacks/:stack_id/bindings/:binding_id"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/stacks/:stack_id/network-mode"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/stacks/:stack_id/databases"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/stacks/:stack_id/blob"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/apps/:id/stack/databases"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/stacks/:stack_id/snapshots"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/stacks/:stack_id/snapshots/:snapshot_id/restore"
+	},
+	{
+		"method": "POST",
+		"path": "/v1/stacks/:stack_id/template/detach"
+	},
+	{
+		"method": "DELETE",
+		"path": "/v1/stacks/:stack_id"
 	}
 ]

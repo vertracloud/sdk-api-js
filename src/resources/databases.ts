@@ -1,6 +1,6 @@
 import type { VertraClient } from "../client.js";
 import { deferredPathSegment } from "../client.js";
-import type { APIDatabase, APIDatabaseCertificate, APIDatabaseMetrics, APIDatabaseOperationResponse, APIDatabasePasswordReset, APIDatabaseStatus, APIDatabaseStatusShort, APIDatabaseVersions, DatabaseType, RequestOptions } from "../types.js";
+import type { APIDatabase, APIDatabaseCertificate, APIDatabaseCertificateReset, APIDatabaseMetrics, APIDatabaseOperationResponse, APIDatabasePasswordReset, APIDatabaseStatus, APIDatabaseStatusShort, APIDatabaseVersions, DatabaseType, RequestOptions } from "../types.js";
 
 export interface CreateDatabaseBody {
 	name: string;
@@ -83,12 +83,12 @@ export class DatabasesResource {
 			 */
 			get: (id: string, options?: RequestOptions): Promise<APIDatabaseCertificate> => this.client.request({ method: "GET", path: `/v1/databases/${deferredPathSegment(id)}/credentials/certificate`, query: { workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
-			/** `POST /v1/databases/:id/credentials/certificate/reset` — scope `databases:credentials`. @see https://docs.vertracloud.app/api-reference/endpoint/databases/credentials/reset */
-			reset: (id: string, options?: RequestOptions): Promise<void> => this.client.request({ method: "POST", path: `/v1/databases/${deferredPathSegment(id)}/credentials/certificate/reset`, query: { workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+			/** `POST /v1/databases/:id/credentials/certificate/reset` — scope `databases:credentials`. Returns the new certificate and which applications of connected stacks must restart to read it (`restart_required`, `apps_to_restart`). @see https://docs.vertracloud.app/api-reference/endpoint/databases/credentials/reset */
+			reset: (id: string, options?: RequestOptions): Promise<APIDatabaseCertificateReset> => this.client.request({ method: "POST", path: `/v1/databases/${deferredPathSegment(id)}/credentials/certificate/reset`, query: { workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 		},
 
 		password: {
-			/** `POST /v1/databases/:id/credentials/reset` — scope `databases:credentials`. @see https://docs.vertracloud.app/api-reference/endpoint/databases/credentials/resetpassword */
+			/** `POST /v1/databases/:id/credentials/reset` — scope `databases:credentials`. Also says which applications of connected stacks must restart to read the new password (`restart_required`, `apps_to_restart`). @see https://docs.vertracloud.app/api-reference/endpoint/databases/credentials/resetpassword */
 			reset: (id: string, options?: RequestOptions): Promise<APIDatabasePasswordReset> => this.client.request({ method: "POST", path: `/v1/databases/${deferredPathSegment(id)}/credentials/reset`, query: { workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 		},
 	};

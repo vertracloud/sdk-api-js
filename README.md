@@ -143,6 +143,47 @@ await client.images.update(image.id, { name: "api-base", description: null });
 
 `images.delete` needs `confirmName`, the image's name, and also deletes every app created from it. Pass `workspaceId` to act on an image that belongs to a workspace. A refused `Dockerfile` throws `DockerfileRefusedError`, whose `issues` lists what blocked the build.
 
+### Templates
+
+A template describes what to create: one application, or a stack with applications, databases and a Blob folder. `deploy` returns a job right away; follow it with `deploys.events` (Server-Sent Events) or read `deploys.get`. A job that fails is undone as a whole.
+
+```ts
+const page = await client.templates.list({ category: "bots", sort: "popular" });
+
+// `idempotencyKey` is sent only as the Idempotency-Key header: repeating the call returns the same job.
+const job = await client.templates.deploy("n8n", { name: "my-n8n", inputs: { admin_email: "me@example.com" } }, { idempotencyKey: crypto.randomUUID() });
+
+// Progress: heartbeats are skipped and the loop ends when the API closes the stream.
+for await (const event of client.templates.deploys.events(job.id)) console.log(event.status, event.current_step);
+
+// Outputs are never sent on the stream: read them from the job.
+const done = await client.templates.deploys.get(job.id);
+```
+
+Private templates: `create` and `newVersion` take the manifest and one ZIP per service that runs code (`sources`, by service id); `fromApp` and `fromStack` save what you already run (read `appDraft` / `stackDraft` first to review the variables). `shareLinks` creates, lists and revokes links; `share` previews, uses, copies or reports what a link gives. `updates` reads and runs the update of an app or stack that came from a template, and detaches it. `validate` checks a manifest without creating anything.
+
+A refused manifest throws `ValidationError` with the code `TEMPLATE_MANIFEST_INVALID`; read the findings with `templateManifestIssues(error)`. The same family of readers covers `TEMPLATE_SECRET_IN_SOURCE` (`templateSecretFiles`), `TEMPLATE_UPDATE_BLOCKED` (`templateUpdateBlockedDetails`) and `TEMPLATE_DETACH_CONFIRMATION_REQUIRED` (`templateDetachConfirmation`); each returns `undefined` for any other error.
+
+An application that came from an open template stops receiving versions when its code is changed. The calls that change code (`apps.files.write`, `move`, `delete`, `apps.files.upload` and `apps.deploys.webhook.create`) fail with `TEMPLATE_DETACH_CONFIRMATION_REQUIRED` until you send `confirm_detach: true` (`confirmDetach: true` on `upload`).
+
+### Stacks
+
+A stack groups applications, databases and Blob folders, and keeps the connection variables of each application up to date. Changes that alter variables or certificates return `restart_required` and `apps_to_restart`: an application reads them only when it starts, so the restart is yours to ask for.
+
+```ts
+const change = await client.stacks.create({
+	name: "shop",
+	members: [
+		{ resource_type: "application", resource_id: appId },
+		{ resource_type: "database", resource_id: dbId },
+	],
+	bindings: [{ app_id: appId, database_id: dbId }],
+});
+if (change.restart_required) for (const id of change.apps_to_restart) await client.apps.restart(id);
+```
+
+`delete` needs `confirm_name` equal to the stack name; `mode: "dissolve"` removes only the stack, `"delete_all"` deletes the members too. `members`, `bindings` and `snapshots` group the routes of members, connections and whole-stack snapshots; `connection` returns code to connect an app to what it is linked to. Move a stack or a template to a workspace with `workspaces.stacks.add` and `workspaces.templates.add`. Error codes of both areas (`TEMPLATE_*`, `STACK_*`, `SHARE_LINK_*`, `BLOB_PREFIX_DENIED`, ...) are in `API_ERROR_CODES`, with `TEMPLATE_ERROR_CODES` and `STACK_ERROR_CODES` for each area.
+
 ### Database versions
 
 ```ts
@@ -215,10 +256,12 @@ const client = new VertraClient({ apiKey: "test", fetch: myFakeFetch });
 |---|---|---|
 | Apps | `client.apps` (+ `.deploys`, `.releases`, `.domains`, `.network`, `.envs`, `.files`) | 43 |
 | Images | `client.images` | 12 |
+| Templates | `client.templates` (+ `.deploys`, `.shareLinks`, `.share`, `.updates`) | 32 |
+| Stacks | `client.stacks` (+ `.members`, `.bindings`, `.snapshots`) | 20 |
 | Databases | `client.databases` (+ `.credentials`) | 14 |
 | Snapshots | `client.snapshots` | 5 |
 | Account | `client.account` (+ `.sessions`, `.folders`, `.favorites`) | 10 |
-| Workspaces | `client.workspaces` (+ `.members`, `.roles`, `.invites`, `.actionRequests`, `.apps`, `.databases`, `.folders`, `.favorites`) | 30 |
+| Workspaces | `client.workspaces` (+ `.members`, `.roles`, `.invites`, `.actionRequests`, `.apps`, `.databases`, `.templates`, `.stacks`, `.folders`, `.favorites`) | 34 |
 | Billing | `client.billing` (+ `.orders`) | 7 |
 
 Dashboard-only features (activity log, notifications, API key management, the database **Data** tab, plan downgrade, creating workspace invites, approving action requests, and card payments: saved cards, paying an order by card, automatic renewal, coupon preview and receipts) are not part of the public API. See [what an API key cannot do](https://docs.vertracloud.app/sdks).

@@ -121,6 +121,22 @@ export class WorkspacesResource {
 		remove: (workspaceId: string, databaseId: string, options?: Opts): Promise<void> => this.client.request({ method: "DELETE", path: `/v1/workspaces/${deferredPathSegment(workspaceId)}/databases/${deferredPathSegment(databaseId)}`, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 	};
 
+	readonly templates = {
+		/** `POST /v1/workspaces/:id/templates/:template_id` — scope `workspaces:write`. Moves a private template to the workspace; only the owner of the workspace and of the template. Repeating it is not an error; a template already in another workspace fails with 409. */
+		add: (workspaceId: string, templateId: string, options?: Opts): Promise<void> => this.client.request({ method: "POST", path: `/v1/workspaces/${deferredPathSegment(workspaceId)}/templates/${deferredPathSegment(templateId)}`, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+
+		/** `DELETE /v1/workspaces/:id/templates/:template_id` — scope `workspaces:write`. Takes the template out of the workspace. */
+		remove: (workspaceId: string, templateId: string, options?: Opts): Promise<void> => this.client.request({ method: "DELETE", path: `/v1/workspaces/${deferredPathSegment(workspaceId)}/templates/${deferredPathSegment(templateId)}`, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+	};
+
+	readonly stacks = {
+		/** `POST /v1/workspaces/:id/stacks/:stack_id` — scope `workspaces:write`. Moves a stack (every member already has to be in the workspace) to the workspace. */
+		add: (workspaceId: string, stackId: string, options?: Opts): Promise<void> => this.client.request({ method: "POST", path: `/v1/workspaces/${deferredPathSegment(workspaceId)}/stacks/${deferredPathSegment(stackId)}`, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+
+		/** `DELETE /v1/workspaces/:id/stacks/:stack_id` — scope `workspaces:write`. Takes the stack out of the workspace. */
+		remove: (workspaceId: string, stackId: string, options?: Opts): Promise<void> => this.client.request({ method: "DELETE", path: `/v1/workspaces/${deferredPathSegment(workspaceId)}/stacks/${deferredPathSegment(stackId)}`, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+	};
+
 	readonly folders = {
 		/** `POST /v1/workspaces/:id/folders` — scope `workspaces:write`. */
 		create: (workspaceId: string, body: { name: string; color?: WorkspaceFolderColor; position?: number }, options?: Opts): Promise<APIWorkspaceResourceFolder> =>

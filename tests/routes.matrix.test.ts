@@ -34,7 +34,7 @@ function expectedPath(template: string): string {
 }
 
 const expectedRoutes = new Set(matrix.map((r) => `${r.method} ${expectedPath(r.path)}`));
-assert.equal(expectedRoutes.size, 121, "fixture must have exactly 121 unique routes");
+assert.equal(expectedRoutes.size, 177, "fixture must have exactly 177 unique routes");
 
 // The fixture must be exactly the public API key catalog — a route added to or dropped from the
 // catalog fails here until the SDK follows. Blob Storage routes belong to `@vertracloud/blob`.
@@ -45,8 +45,8 @@ const catalogRoutes = new Set(
 );
 assert.deepEqual(new Set(matrix.map((r) => `${r.method} ${r.path}`)), catalogRoutes, "fixture must match API_KEY_SCOPES");
 
-describe("routes matrix — every SDK method maps to exactly one of the 121 frozen routes", () => {
-	it("(a)+(b): calling every resource method hits exactly the 121 expected method+path pairs, nothing else", async () => {
+describe("routes matrix — every SDK method maps to exactly one of the 177 frozen routes", () => {
+	it("(a)+(b): calling every resource method hits exactly the 177 expected method+path pairs, nothing else", async () => {
 		const captured: { method: string; path: string }[] = [];
 		const fetchImpl = makeMockFetch([], { jsonBody: { response: {} } });
 		const client = new VertraClient({
@@ -169,6 +169,65 @@ describe("routes matrix — every SDK method maps to exactly one of the 121 froz
 		await client.workspaces.favorites.add(FAKE, FAKE2, FAKE3);
 		await client.workspaces.favorites.remove(FAKE, FAKE2, FAKE3);
 
+		await client.workspaces.templates.add(FAKE, FAKE2);
+		await client.workspaces.templates.remove(FAKE, FAKE2);
+		await client.workspaces.stacks.add(FAKE, FAKE2);
+		await client.workspaces.stacks.remove(FAKE, FAKE2);
+
+		await client.templates.list();
+		await client.templates.categories();
+		await client.templates.get(FAKE);
+		await client.templates.versions(FAKE);
+		await client.templates.validate({});
+		await client.templates.deploy(FAKE, { name: "n" });
+		await client.templates.create({ manifest: {} });
+		await client.templates.fromApp(FAKE, { id: "s", name: { "pt-br": "n" }, description: { "pt-br": "d" }, category: "other", member: { resource_id: FAKE2, service_id: "app" } });
+		await client.templates.fromStack(FAKE, { id: "s", name: { "pt-br": "n" }, description: { "pt-br": "d" }, category: "other", members: [] });
+		await client.templates.appDraft(FAKE);
+		await client.templates.stackDraft(FAKE);
+		await client.templates.update(FAKE, { tags: [] });
+		await client.templates.delete(FAKE);
+		await client.templates.newVersion(FAKE, { manifest: {} });
+		await client.templates.linkGitHub(FAKE, { repository: "o/r" });
+		await client.templates.unlinkGitHub(FAKE);
+		await client.templates.reportApp(FAKE, { reason: "other" });
+		await client.templates.deploys.get(FAKE);
+		await client.templates.deploys.events(FAKE).next();
+		await client.templates.shareLinks.create(FAKE);
+		await client.templates.shareLinks.list(FAKE);
+		await client.templates.shareLinks.revoke(FAKE, FAKE2);
+		await client.templates.share.preview(FAKE);
+		await client.templates.share.deploy(FAKE, { name: "n" });
+		await client.templates.share.copy(FAKE);
+		await client.templates.share.report(FAKE, { reason: "other" });
+		await client.templates.updates.appInfo(FAKE);
+		await client.templates.updates.appUpdate(FAKE);
+		await client.templates.updates.appDetach(FAKE);
+		await client.templates.updates.stackInfo(FAKE);
+		await client.templates.updates.stackUpdate(FAKE);
+		await client.templates.updates.stackDetach(FAKE);
+
+		await client.stacks.list();
+		await client.stacks.get(FAKE);
+		await client.stacks.create({ name: "s" });
+		await client.stacks.transform({ folder_id: FAKE, inject_variables: false });
+		await client.stacks.update(FAKE, { name: "s" });
+		await client.stacks.delete(FAKE, { mode: "dissolve", confirm_name: "s" });
+		await client.stacks.connection(FAKE, { app_id: FAKE2 });
+		await client.stacks.setNetworkMode(FAKE, "public");
+		await client.stacks.addDatabase(FAKE, { type: "postgres", name: "db", ram: 256 });
+		await client.stacks.addDatabaseToApp(FAKE, { type: "postgres", name: "db", ram: 256 });
+		await client.stacks.addBlob(FAKE);
+		await client.stacks.members.add(FAKE, { resource_type: "application", resource_id: FAKE2 });
+		await client.stacks.members.remove(FAKE, FAKE2 as "application", FAKE3);
+		await client.stacks.bindings.list(FAKE);
+		await client.stacks.bindings.create(FAKE, { app_id: FAKE2, database_id: FAKE3 });
+		await client.stacks.bindings.update(FAKE, FAKE2, { DATABASE_URL: "url" });
+		await client.stacks.bindings.delete(FAKE, FAKE2);
+		await client.stacks.snapshots.list(FAKE);
+		await client.stacks.snapshots.create(FAKE);
+		await client.stacks.snapshots.restore(FAKE, FAKE2);
+
 		await client.billing.orders.list();
 		await client.billing.orders.status(FAKE);
 		await client.billing.orders.create({});
@@ -201,9 +260,9 @@ describe("routes matrix — every SDK method maps to exactly one of the 121 froz
 		}
 		// (b) nothing outside the fixture was hit
 		for (const call of capturedSet) {
-			assert.ok(expectedRoutes.has(call), `unexpected call outside the 121-route matrix: ${call}`);
+			assert.ok(expectedRoutes.has(call), `unexpected call outside the 177-route matrix: ${call}`);
 		}
-		assert.equal(capturedSet.size, 121);
+		assert.equal(capturedSet.size, 177);
 	});
 });
 
