@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.3](https://github.com/vertracloud/sdk-api-js/compare/v0.3.2...v0.3.3) (2026-10-30)
+
+
+### Features
+
+* add templates and stacks resources ([bbff571](https://github.com/vertracloud/sdk-api-js/commit/bbff571b94c9c60e01a0d56fa5195016f4d062ac))
+
+
+### Bug Fixes
+
+* **templates:** neutral network mode descriptions ([c581c8b](https://github.com/vertracloud/sdk-api-js/commit/c581c8b701751d29e54d267cd9922ab76a7a093f))
+
 ## [0.3.2](https://github.com/vertracloud/sdk-api-js/compare/v0.3.1...v0.3.2) (2026-10-25)
 
 
