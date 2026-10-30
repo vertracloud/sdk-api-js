@@ -116,7 +116,7 @@ export class StacksResource {
 		});
 	}
 
-	/** `POST /v1/stacks/:stack_id/network-mode` — scope `stacks:write`. Only `public` is accepted for now (`STACK_NETWORK_MODE_UNAVAILABLE` otherwise). @see https://docs.vertracloud.app/api-reference/endpoint/stacks/network-mode */
+	/** `POST /v1/stacks/:stack_id/network-mode` — scope `stacks:write`. Only `public` is accepted (`STACK_NETWORK_MODE_UNAVAILABLE` otherwise). @see https://docs.vertracloud.app/api-reference/endpoint/stacks/network-mode */
 	setNetworkMode(id: string, networkMode: StackNetworkMode, options?: RequestOptions): Promise<APIStack> {
 		return this.client.request({ method: "POST", path: `/v1/stacks/${deferredPathSegment(id)}/network-mode`, query: withWorkspace(options), body: { network_mode: networkMode }, signal: options?.signal, timeoutMs: options?.timeoutMs });
 	}
