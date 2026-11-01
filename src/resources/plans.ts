@@ -11,7 +11,7 @@ export class PlansResource {
 	constructor(private readonly client: VertraClient) {}
 
 	/**
-	 * `GET /v1/plans` — no authentication. The plans currently for sale (`grid`), the billing periods with their
+	 * `GET /v1/plans` — no authentication. The plans currently for sale, the billing periods with their
 	 * discounts (`cycles`: 1, 3, 6 or 12 months) and, per plan, price, memory, vCPU, limits and features.
 	 */
 	list(options?: Opts): Promise<APIPlansCatalog> {

@@ -16,7 +16,6 @@ describe("plans", () => {
 
 	it("list hits GET /v1/plans without the Authorization header and unwraps the envelope", async () => {
 		const catalog: APIPlansCatalog = {
-			grid: "v3",
 			cycles: [
 				{ months: 1, discount_percent: 0 },
 				{ months: 6, discount_percent: 15 },

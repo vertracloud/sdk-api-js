@@ -247,7 +247,7 @@ await client.apps.updateConfig(appId, { deploy: { auto_rollback: true, health_ch
 ```ts
 // Public route: sent without the API key. The plans for sale, their limits and the billing periods (1, 3, 6 or 12 months).
 const catalog = await client.plans.list();
-console.log(catalog.grid, catalog.cycles, catalog.plans.map((plan) => `${plan.name} R$ ${plan.price}`));
+console.log(catalog.cycles, catalog.plans.map((plan) => `${plan.name} R$ ${plan.price}`));
 
 // Price of a plan and period (scope `billing:read`), with an optional coupon, without creating an order. `total` is in BRL.
 const quote = await client.billing.orders.quote({ plan: "starter-2", months: 6, coupon: "MYCODE" });
