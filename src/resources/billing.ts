@@ -1,6 +1,6 @@
 import type { VertraClient } from "../client.js";
 import { deferredPathSegment } from "../client.js";
-import type { APIBillingDetails, APIOrderCreateResponse, APIOrderListItem, APIOrderPixPayment, APIOrderStatus, APIRedeemResponse, OrderProvider, RESTPostAPIOrderCreateBody, RESTPutAPIBillingDetailsBody } from "../types.js";
+import type { APIBillingDetails, APIOrderCreateResponse, APIOrderListItem, APIOrderPixPayment, APIOrderQuote, APIOrderStatus, APIRedeemResponse, OrderProvider, RESTPostAPIOrderCreateBody, RESTPostAPIOrderQuoteBody, RESTPutAPIBillingDetailsBody } from "../types.js";
 
 type Opts = { signal?: AbortSignal; timeoutMs?: number };
 
@@ -20,6 +20,12 @@ export class BillingResource {
 
 		/** `POST /v1/orders` — scope `billing:write`. */
 		create: (body: RESTPostAPIOrderCreateBody, options?: Opts): Promise<APIOrderCreateResponse> => this.client.request({ method: "POST", path: "/v1/orders", body, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+
+		/**
+		 * `POST /v1/orders/quote` — scope `billing:read`. Prices a plan and period (`months`: 1, 3, 6 or 12),
+		 * with an optional coupon, without creating an order or using the coupon. `total` is what `orders.create` would charge.
+		 */
+		quote: (body: RESTPostAPIOrderQuoteBody, options?: Opts): Promise<APIOrderQuote> => this.client.request({ method: "POST", path: "/v1/orders/quote", body, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
 		/** `POST /v1/orders/:orderId/initiate/pix` — scope `billing:write`. */
 		initiatePix: (orderId: string, options?: Opts): Promise<APIOrderPixPayment> => this.client.request({ method: "POST", path: `/v1/orders/${deferredPathSegment(orderId)}/initiate/pix`, signal: options?.signal, timeoutMs: options?.timeoutMs }),

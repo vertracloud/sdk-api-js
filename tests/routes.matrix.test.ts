@@ -34,7 +34,7 @@ function expectedPath(template: string): string {
 }
 
 const expectedRoutes = new Set(matrix.map((r) => `${r.method} ${expectedPath(r.path)}`));
-assert.equal(expectedRoutes.size, 177, "fixture must have exactly 177 unique routes");
+assert.equal(expectedRoutes.size, 178, "fixture must have exactly 178 unique routes");
 
 // The fixture must be exactly the public API key catalog — a route added to or dropped from the
 // catalog fails here until the SDK follows. Blob Storage routes belong to `@vertracloud/blob`.
@@ -45,8 +45,8 @@ const catalogRoutes = new Set(
 );
 assert.deepEqual(new Set(matrix.map((r) => `${r.method} ${r.path}`)), catalogRoutes, "fixture must match API_KEY_SCOPES");
 
-describe("routes matrix — every SDK method maps to exactly one of the 177 frozen routes", () => {
-	it("(a)+(b): calling every resource method hits exactly the 177 expected method+path pairs, nothing else", async () => {
+describe("routes matrix — every SDK method maps to exactly one of the 178 frozen routes", () => {
+	it("(a)+(b): calling every resource method hits exactly the 178 expected method+path pairs, nothing else", async () => {
 		const captured: { method: string; path: string }[] = [];
 		const fetchImpl = makeMockFetch([], { jsonBody: { response: {} } });
 		const client = new VertraClient({
@@ -231,6 +231,7 @@ describe("routes matrix — every SDK method maps to exactly one of the 177 froz
 		await client.billing.orders.list();
 		await client.billing.orders.status(FAKE);
 		await client.billing.orders.create({});
+		await client.billing.orders.quote({ plan: "starter-1", months: 1 });
 		await client.billing.orders.initiatePix(FAKE);
 		await client.billing.details();
 		await client.billing.updateDetails({ name: "x", address: { line1: "x", number: null, line2: null, district: null, city: "x", city_code: null, state: null, postal_code: null, country: "US" } });
@@ -260,9 +261,9 @@ describe("routes matrix — every SDK method maps to exactly one of the 177 froz
 		}
 		// (b) nothing outside the fixture was hit
 		for (const call of capturedSet) {
-			assert.ok(expectedRoutes.has(call), `unexpected call outside the 177-route matrix: ${call}`);
+			assert.ok(expectedRoutes.has(call), `unexpected call outside the 178-route matrix: ${call}`);
 		}
-		assert.equal(capturedSet.size, 177);
+		assert.equal(capturedSet.size, 178);
 	});
 });
 

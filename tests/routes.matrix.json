@@ -341,6 +341,10 @@
 	},
 	{
 		"method": "POST",
+		"path": "/v1/orders/quote"
+	},
+	{
+		"method": "POST",
 		"path": "/v1/orders/:orderId/initiate/pix"
 	},
 	{

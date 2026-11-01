@@ -242,6 +242,20 @@ await client.apps.files.upload(appId, zip, "app.zip", { message: "fix login" });
 await client.apps.updateConfig(appId, { deploy: { auto_rollback: true, health_check_path: "/health" } });
 ```
 
+### Plans and quotes
+
+```ts
+// Public route: sent without the API key. The plans for sale, their limits and the billing periods (1, 3, 6 or 12 months).
+const catalog = await client.plans.list();
+console.log(catalog.grid, catalog.cycles, catalog.plans.map((plan) => `${plan.name} R$ ${plan.price}`));
+
+// Price of a plan and period (scope `billing:read`), with an optional coupon, without creating an order. `total` is in BRL.
+const quote = await client.billing.orders.quote({ plan: "starter-2", months: 6, coupon: "MYCODE" });
+console.log(quote.total, quote.period_discount_percent, quote.legacy_price);
+```
+
+`client.billing.orders.create` takes the same `plan` and `months`. Plan names of the previous grid (`economy`, `pro`, `scale`, `intermediary`, `enterprise-4` to `enterprise-30`) are still accepted while there are subscribers on them.
+
 ### Testing your code
 
 Pass your own `fetch` to the client to answer requests without touching the network:
@@ -262,7 +276,8 @@ const client = new VertraClient({ apiKey: "test", fetch: myFakeFetch });
 | Snapshots | `client.snapshots` | 5 |
 | Account | `client.account` (+ `.sessions`, `.folders`, `.favorites`) | 10 |
 | Workspaces | `client.workspaces` (+ `.members`, `.roles`, `.invites`, `.actionRequests`, `.apps`, `.databases`, `.templates`, `.stacks`, `.folders`, `.favorites`) | 34 |
-| Billing | `client.billing` (+ `.orders`) | 7 |
+| Billing | `client.billing` (+ `.orders`, with `orders.quote`) | 8 |
+| Plans | `client.plans` | 1 (public) |
 
 Dashboard-only features (activity log, notifications, API key management, the database **Data** tab, plan downgrade, creating workspace invites, approving action requests, and card payments: saved cards, paying an order by card, automatic renewal, coupon preview and receipts) are not part of the public API. See [what an API key cannot do](https://docs.vertracloud.app/sdks).
 

@@ -4,6 +4,7 @@ import { AppsResource } from "./resources/apps.js";
 import { BillingResource } from "./resources/billing.js";
 import { DatabasesResource } from "./resources/databases.js";
 import { ImagesResource } from "./resources/images.js";
+import { PlansResource } from "./resources/plans.js";
 import { SnapshotsResource } from "./resources/snapshots.js";
 import { StacksResource } from "./resources/stacks.js";
 import { TemplatesResource } from "./resources/templates.js";
@@ -38,6 +39,8 @@ export interface RequestConfig {
 	form?: FormData;
 	/** Extra request headers (e.g. `Idempotency-Key`). They never override `Authorization` or `User-Agent`. */
 	headers?: Record<string, string>;
+	/** Set to `false` on public routes: the request goes out without the `Authorization` header. Default `true`. */
+	auth?: boolean;
 	signal?: AbortSignal;
 	timeoutMs?: number;
 }
@@ -140,6 +143,8 @@ export class VertraClient {
 	readonly workspaces: WorkspacesResource;
 	/** `billing.*` — see {@link BillingResource}. */
 	readonly billing: BillingResource;
+	/** `plans.*` — see {@link PlansResource}. */
+	readonly plans: PlansResource;
 
 	constructor(config: VertraClientConfig) {
 		if (!config.apiKey) throw new Error("VertraClient: apiKey is required");
@@ -158,6 +163,7 @@ export class VertraClient {
 		this.account = new AccountResource(this);
 		this.workspaces = new WorkspacesResource(this);
 		this.billing = new BillingResource(this);
+		this.plans = new PlansResource(this);
 	}
 
 	/** Never expose the API key through logging, inspection or serialization of the client. */
@@ -173,9 +179,9 @@ export class VertraClient {
 		return this.toString();
 	}
 
-	private headers(extra?: Record<string, string>): Headers {
+	private headers(extra?: Record<string, string>, auth = true): Headers {
 		const headers = new Headers(extra);
-		headers.set("Authorization", `Bearer ${this.#apiKey}`);
+		if (auth) headers.set("Authorization", `Bearer ${this.#apiKey}`);
 		headers.set("User-Agent", this.userAgent);
 		return headers;
 	}
@@ -237,7 +243,7 @@ export class VertraClient {
 		assertValidPath(config.path);
 		const timeoutMs = config.timeoutMs ?? this.timeoutMs;
 		const { signal, cleanup } = this.combineSignal(config.signal, timeoutMs);
-		const headers = this.headers({ ...config.headers, ...extraHeaders });
+		const headers = this.headers({ ...config.headers, ...extraHeaders }, config.auth !== false);
 		if (contentType) headers.set("Content-Type", contentType);
 
 		const url = buildUrl(this.baseUrl, config.path, config.query);

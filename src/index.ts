@@ -12,6 +12,7 @@ export { AppsResource, type CreateAppOptions, type WaitUntilReadyOptions } from 
 export { BillingResource } from "./resources/billing.js";
 export { DatabasesResource, type CreateDatabaseBody } from "./resources/databases.js";
 export { ImagesResource, type CreateImageOptions, type ImageGitHubSource, type ImageLogsOptions, type ImageRequestOptions } from "./resources/images.js";
+export { PlansResource } from "./resources/plans.js";
 export { SnapshotsResource } from "./resources/snapshots.js";
 export {
 	StacksResource,
