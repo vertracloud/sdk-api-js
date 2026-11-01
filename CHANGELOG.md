@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.0](https://github.com/vertracloud/sdk-api-js/compare/v0.3.3...v0.4.0) (2026-11-01)
+
+
+### ⚠ BREAKING CHANGES
+
+* use PlanName for plan names
+
+### Features
+
+* support the new plans, plans listing and order quote ([5dc5b6d](https://github.com/vertracloud/sdk-api-js/commit/5dc5b6d29e2fb73713027e119398413e0ac2dd5f))
+* use PlanName for plan names ([1a50549](https://github.com/vertracloud/sdk-api-js/commit/1a50549e769dddd2baece1781a66832751137686))
+
 ## [0.3.3](https://github.com/vertracloud/sdk-api-js/compare/v0.3.2...v0.3.3) (2026-10-30)
 
 
