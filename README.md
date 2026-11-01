@@ -254,7 +254,7 @@ const quote = await client.billing.orders.quote({ plan: "starter-2", months: 6, 
 console.log(quote.total, quote.period_discount_percent, quote.legacy_price);
 ```
 
-`client.billing.orders.create` takes the same `plan` and `months`. Plan names of the previous grid (`economy`, `pro`, `scale`, `intermediary`, `enterprise-4` to `enterprise-30`) are still accepted while there are subscribers on them.
+`client.billing.orders.create` takes the same `plan` and `months`.
 
 ### Testing your code
 

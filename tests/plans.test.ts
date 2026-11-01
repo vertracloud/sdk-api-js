@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "vitest";
-import type { APIOrderQuote, APIPlansCatalog, UserPlanName } from "../src/index.js";
+import type { APIOrderQuote, APIPlansCatalog, PlanName } from "../src/index.js";
 import { PlansResource } from "../src/index.js";
 import { type CapturedCall, makeClient } from "./helpers.js";
 
@@ -39,9 +39,9 @@ describe("plans", () => {
 		assert.ok(header(calls[0], "authorization")?.startsWith("Bearer "));
 	});
 
-	it("v3 and legacy plan names are both accepted by the types", () => {
-		const names: UserPlanName[] = ["starter-1", "starter-2", "pro-4", "business-24", "enterprise-512", "economy", "scale", "intermediary"];
-		assert.equal(names.length, 8);
+	it("current plan names are accepted by the types", () => {
+		const names: PlanName[] = ["starter-1", "starter-2", "pro-4", "business-24", "enterprise-512"];
+		assert.equal(names.length, 5);
 	});
 });
 
