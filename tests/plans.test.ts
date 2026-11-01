@@ -58,11 +58,11 @@ describe("billing.orders.quote", () => {
 			payment_methods: ["pix", "card"],
 		};
 		const { client, calls } = makeClient({ jsonBody: { response: quote } });
-		const result = await client.billing.orders.quote({ plan: "starter-1", months: 6, coupon: "V3-X" });
+		const result = await client.billing.orders.quote({ plan: "starter-1", months: 6, coupon: "PROMO-X" });
 		assert.deepEqual(result, quote);
 		assert.equal(calls[0]?.method, "POST");
 		assert.equal(calls[0]?.url.pathname, "/v1/orders/quote");
-		assert.deepEqual(JSON.parse(String(calls[0]?.init.body)), { plan: "starter-1", months: 6, coupon: "V3-X" });
+		assert.deepEqual(JSON.parse(String(calls[0]?.init.body)), { plan: "starter-1", months: 6, coupon: "PROMO-X" });
 		assert.ok(header(calls[0], "authorization")?.startsWith("Bearer "));
 		assert.equal(header(calls[0], "content-type"), "application/json");
 	});
