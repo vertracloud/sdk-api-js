@@ -145,6 +145,22 @@
 	},
 	{
 		"method": "GET",
+		"path": "/v1/apps/:id/analytics"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/apps/:id/analytics/errors"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/apps/:id/analytics/performance"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/apps/:id/analytics/requests"
+	},
+	{
+		"method": "GET",
 		"path": "/v1/apps/runtimes"
 	},
 	{

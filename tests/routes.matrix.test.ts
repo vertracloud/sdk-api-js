@@ -34,7 +34,7 @@ function expectedPath(template: string): string {
 }
 
 const expectedRoutes = new Set(matrix.map((r) => `${r.method} ${expectedPath(r.path)}`));
-assert.equal(expectedRoutes.size, 178, "fixture must have exactly 178 unique routes");
+assert.equal(expectedRoutes.size, 182, "fixture must have exactly 182 unique routes");
 
 // The fixture must be exactly the public API key catalog — a route added to or dropped from the
 // catalog fails here until the SDK follows. Blob Storage routes belong to `@vertracloud/blob`.
@@ -45,8 +45,8 @@ const catalogRoutes = new Set(
 );
 assert.deepEqual(new Set(matrix.map((r) => `${r.method} ${r.path}`)), catalogRoutes, "fixture must match API_KEY_SCOPES");
 
-describe("routes matrix — every SDK method maps to exactly one of the 178 frozen routes", () => {
-	it("(a)+(b): calling every resource method hits exactly the 178 expected method+path pairs, nothing else", async () => {
+describe("routes matrix — every SDK method maps to exactly one of the 182 frozen routes", () => {
+	it("(a)+(b): calling every resource method hits exactly the 182 expected method+path pairs, nothing else", async () => {
 		const captured: { method: string; path: string }[] = [];
 		const fetchImpl = makeMockFetch([], { jsonBody: { response: {} } });
 		const client = new VertraClient({
@@ -63,6 +63,10 @@ describe("routes matrix — every SDK method maps to exactly one of the 178 froz
 
 		await client.apps.get(FAKE);
 		await client.apps.status(FAKE);
+		await client.apps.analytics.traffic(FAKE);
+		await client.apps.analytics.errors(FAKE);
+		await client.apps.analytics.performance(FAKE);
+		await client.apps.analytics.requests(FAKE);
 		await client.apps.statusAll();
 		await client.apps.runtimes();
 		await client.apps.realtime(FAKE).next();
@@ -261,9 +265,9 @@ describe("routes matrix — every SDK method maps to exactly one of the 178 froz
 		}
 		// (b) nothing outside the fixture was hit
 		for (const call of capturedSet) {
-			assert.ok(expectedRoutes.has(call), `unexpected call outside the 178-route matrix: ${call}`);
+			assert.ok(expectedRoutes.has(call), `unexpected call outside the 182-route matrix: ${call}`);
 		}
-		assert.equal(capturedSet.size, 178);
+		assert.equal(capturedSet.size, 182);
 	});
 });
 

@@ -268,7 +268,7 @@ const client = new VertraClient({ apiKey: "test", fetch: myFakeFetch });
 
 | Domain | Resource | Routes |
 |---|---|---|
-| Apps | `client.apps` (+ `.deploys`, `.releases`, `.domains`, `.network`, `.envs`, `.files`) | 43 |
+| Apps | `client.apps` (+ `.deploys`, `.releases`, `.domains`, `.network`, `.envs`, `.files`, `.analytics`) | 47 |
 | Images | `client.images` | 12 |
 | Templates | `client.templates` (+ `.deploys`, `.shareLinks`, `.share`, `.updates`) | 32 |
 | Stacks | `client.stacks` (+ `.members`, `.bindings`, `.snapshots`) | 20 |

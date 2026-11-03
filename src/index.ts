@@ -1,7 +1,24 @@
 export { VertraClient, encodePathSegment } from "./client.js";
 export type { QueryParams, QueryValue, RequestConfig, VertraClientConfig } from "./client.js";
 
-export { AppBuildFailedError, AppBuildTimeoutError, AuthenticationError, buildAPIError, DockerfileRefusedError, NotFoundError, PermissionError, RateLimitError, templateDetachConfirmation, templateManifestIssues, templateSecretFiles, templateUpdateBlockedDetails, ValidationError, VertraAPIError } from "./errors.js";
+export {
+	analyticsBusyRetryAfter,
+	analyticsRangeExceedsPlan,
+	AppBuildFailedError,
+	AppBuildTimeoutError,
+	AuthenticationError,
+	buildAPIError,
+	DockerfileRefusedError,
+	NotFoundError,
+	PermissionError,
+	RateLimitError,
+	templateDetachConfirmation,
+	templateManifestIssues,
+	templateSecretFiles,
+	templateUpdateBlockedDetails,
+	ValidationError,
+	VertraAPIError,
+} from "./errors.js";
 export type { VertraAPIErrorBody } from "./errors.js";
 
 export { parseSseStream, SseIdleTimeoutError } from "./sse.js";

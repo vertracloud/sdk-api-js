@@ -4,6 +4,11 @@ import { AppBuildFailedError, AppBuildTimeoutError } from "../errors.js";
 import type { SseEvent } from "../sse.js";
 import type {
 	APIApplication,
+	APIApplicationAnalyticsErrors,
+	APIApplicationAnalyticsPerformance,
+	APIApplicationAnalyticsRequest,
+	APIApplicationAnalyticsRequestList,
+	APIApplicationAnalyticsTraffic,
 	APIApplicationDeployment,
 	APIApplicationDomain,
 	APIApplicationDomainConnect,
@@ -25,11 +30,16 @@ import type {
 	APIApplicationWebPublish,
 	APIApplicationWebhook,
 	APIApplicationWebhookUrl,
+	ApplicationAnalyticsDimension,
 	ApplicationLanguage,
 	FileContentQuery,
 	FileListQuery,
 	PaginationMeta,
 	RESTDeleteAPIApplicationFileBody,
+	RESTGetAPIApplicationAnalyticsErrorsQuery,
+	RESTGetAPIApplicationAnalyticsPerformanceQuery,
+	RESTGetAPIApplicationAnalyticsQuery,
+	RESTGetAPIApplicationAnalyticsRequestsQuery,
 	RESTPatchAPIApplicationDomainBody,
 	RESTPatchAPIApplicationFileMoveBody,
 	RESTPatchAPIApplicationUpdateConfigBody,
@@ -69,6 +79,14 @@ export interface WaitUntilReadyOptions extends RequestOptions {
 	/** Poll interval in ms. Default `2000`. */
 	intervalMs?: number;
 }
+
+/** Filters, window and options of an analytics call: the query of the route (without `workspace_id`, which is `options.workspaceId`). */
+type AnalyticsQuery<T> = Omit<T, "workspace_id">;
+
+/** Query of `analytics.traffic`: `breakdowns` also takes a list of dimensions (sent comma-separated; `[]` = none, `breakdowns=`). */
+type AnalyticsTrafficQuery = Omit<AnalyticsQuery<RESTGetAPIApplicationAnalyticsQuery>, "breakdowns"> & {
+	breakdowns?: RESTGetAPIApplicationAnalyticsQuery["breakdowns"] | readonly ApplicationAnalyticsDimension[];
+};
 
 function withWorkspace(options?: RequestOptions): Record<string, string | undefined> {
 	return { workspace_id: options?.workspaceId };
@@ -218,6 +236,54 @@ export class AppsResource {
 	delete(id: string, options?: RequestOptions): Promise<void> {
 		return this.client.request({ method: "DELETE", path: `/v1/apps/${deferredPathSegment(id)}`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs });
 	}
+
+	private async *analyticsRequestsAll(id: string, query: AnalyticsQuery<RESTGetAPIApplicationAnalyticsRequestsQuery> = {}, options?: RequestOptions): AsyncGenerator<APIApplicationAnalyticsRequest, void, unknown> {
+		const end = query.end ?? new Date().toISOString();
+		const start = query.start ?? new Date(Date.parse(end) - 24 * 3_600_000).toISOString();
+		let cursor = query.cursor;
+		for (;;) {
+			const page = await this.analytics.requests(id, { ...query, start, end, cursor }, options);
+			yield* page.requests;
+			if (!page.cursor) return;
+			cursor = page.cursor;
+		}
+	}
+
+	readonly analytics = {
+		/**
+		 * `GET /v1/apps/:id/analytics` — scope `apps:read`. Traffic of the site: summary, series, previous period and breakdowns.
+		 * @see https://docs.vertracloud.app/api-reference/endpoint/apps/analytics/traffic
+		 */
+		traffic: (id: string, query?: AnalyticsTrafficQuery, options?: RequestOptions): Promise<APIApplicationAnalyticsTraffic> =>
+			this.client.request({ method: "GET", path: `/v1/apps/${deferredPathSegment(id)}/analytics`, query: { ...query, breakdowns: typeof query?.breakdowns === "object" ? query.breakdowns.join(",") : query?.breakdowns, workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+
+		/**
+		 * `GET /v1/apps/:id/analytics/errors` — scope `apps:read`. Errors of the site: totals, series, paths and status distribution.
+		 * @see https://docs.vertracloud.app/api-reference/endpoint/apps/analytics/errors
+		 */
+		errors: (id: string, query?: AnalyticsQuery<RESTGetAPIApplicationAnalyticsErrorsQuery>, options?: RequestOptions): Promise<APIApplicationAnalyticsErrors> =>
+			this.client.request({ method: "GET", path: `/v1/apps/${deferredPathSegment(id)}/analytics/errors`, query: { ...query, workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+
+		/**
+		 * `GET /v1/apps/:id/analytics/performance` — scope `apps:read`. Response times of the site; needs a plan with web analytics performance.
+		 * @see https://docs.vertracloud.app/api-reference/endpoint/apps/analytics/performance
+		 */
+		performance: (id: string, query?: AnalyticsQuery<RESTGetAPIApplicationAnalyticsPerformanceQuery>, options?: RequestOptions): Promise<APIApplicationAnalyticsPerformance> =>
+			this.client.request({ method: "GET", path: `/v1/apps/${deferredPathSegment(id)}/analytics/performance`, query: { ...query, workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+
+		/**
+		 * `GET /v1/apps/:id/analytics/requests` — scope `apps:read`. One page of the request log; pass the returned `cursor` to get the next. To walk every page use `requestsAll`.
+		 * @see https://docs.vertracloud.app/api-reference/endpoint/apps/analytics/requests
+		 */
+		requests: (id: string, query?: AnalyticsQuery<RESTGetAPIApplicationAnalyticsRequestsQuery>, options?: RequestOptions): Promise<APIApplicationAnalyticsRequestList> =>
+			this.client.request({ method: "GET", path: `/v1/apps/${deferredPathSegment(id)}/analytics/requests`, query: { ...query, workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+
+		/**
+		 * Walks the request log page after page, yielding each request. Pins the window (`start`/`end`, default 24 h ending now, resolved once)
+		 * so every page reads the same one. `query.cursor` starts from that page; `query.limit` is the page size.
+		 */
+		requestsAll: (id: string, query?: AnalyticsQuery<RESTGetAPIApplicationAnalyticsRequestsQuery>, options?: RequestOptions): AsyncGenerator<APIApplicationAnalyticsRequest, void, unknown> => this.analyticsRequestsAll(id, query, options),
+	};
 
 	readonly deploys = {
 		/** `GET /v1/apps/:id/deploys` — scope `apps:read`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/deployments */

@@ -1,4 +1,4 @@
-import type { APIApplication, APITemplateDetachConfirmationDetails, APITemplateUpdateBlocked, APITemplateValidationIssue, DockerfileIssue, DockerfileIssueCode } from "@vertracloud/api-types/v1";
+import type { APIApplication, APIApplicationAnalyticsRangeExceedsPlanDetails, APITemplateDetachConfirmationDetails, APITemplateUpdateBlocked, APITemplateValidationIssue, DockerfileIssue, DockerfileIssueCode } from "@vertracloud/api-types/v1";
 
 /**
  * Error envelope shape sent by the Vertra Cloud API on any non-2xx response:
@@ -201,4 +201,23 @@ export function templateDetachConfirmation(error: unknown): APITemplateDetachCon
 	const details = detailsOfCode(error, "TEMPLATE_DETACH_CONFIRMATION_REQUIRED");
 	if (!details || typeof details.action !== "string") return undefined;
 	return details.action as APITemplateDetachConfirmationDetails["action"];
+}
+
+/**
+ * `details` of an `ANALYTICS_RANGE_EXCEEDS_PLAN` error (400): how many days back the plan reads and the earliest `start` accepted right now.
+ * `undefined` for any other error, or when the details are missing.
+ */
+export function analyticsRangeExceedsPlan(error: unknown): APIApplicationAnalyticsRangeExceedsPlanDetails | undefined {
+	const details = detailsOfCode(error, "ANALYTICS_RANGE_EXCEEDS_PLAN");
+	if (!details || typeof details.history_days !== "number" || typeof details.earliest !== "string") return undefined;
+	return details as unknown as APIApplicationAnalyticsRangeExceedsPlanDetails;
+}
+
+/**
+ * Seconds to wait after an `ANALYTICS_BUSY` error (503: analytics is under high demand and no earlier answer is available; try again after this many seconds).
+ * `undefined` for any other error, or when `retry_after` is missing.
+ */
+export function analyticsBusyRetryAfter(error: unknown): number | undefined {
+	const details = detailsOfCode(error, "ANALYTICS_BUSY");
+	return typeof details?.retry_after === "number" ? details.retry_after : undefined;
 }
