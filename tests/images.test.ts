@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+// The global `File` only exists from Node 20; the one in `node:buffer` covers the whole `engines` range (>=18.17).
+import { File } from "node:buffer";
 import { describe, it } from "vitest";
 import { DockerfileRefusedError, NotFoundError, ValidationError, VertraClient } from "../src/index.js";
 import { type CapturedCall, FAKE_KEY, makeClient, makeMockFetch } from "./helpers.js";
