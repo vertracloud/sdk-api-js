@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/vertracloud/sdk-api-js/compare/v0.4.0...v0.4.1) (2026-11-03)
+
+
+### Features
+
+* add web analytics methods ([7dbdc69](https://github.com/vertracloud/sdk-api-js/commit/7dbdc69ec766fad9e6aed41be7098370d99e7080))
+
 ## [0.4.0](https://github.com/vertracloud/sdk-api-js/compare/v0.3.3...v0.4.0) (2026-11-01)
 
 
