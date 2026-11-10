@@ -141,6 +141,8 @@ await client.apps.waitUntilReady(app.id);
 await client.images.update(image.id, { name: "api-base", description: null });
 ```
 
+`images.rebuildFromSource(id)` builds the image again without uploading anything: an image linked to GitHub uses the tip of the linked branch, any other uses the build context of the latest build, including a failed one. It counts toward the hourly deploy limit and returns with `status: "building"`. `images.rebuild(id, file)` replaces the context with a new ZIP.
+
 `images.delete` needs `confirmName`, the image's name, and also deletes every app created from it. Pass `workspaceId` to act on an image that belongs to a workspace. A refused `Dockerfile` throws `DockerfileRefusedError`, whose `issues` lists what blocked the build.
 
 ### Templates
@@ -269,7 +271,7 @@ const client = new VertraClient({ apiKey: "test", fetch: myFakeFetch });
 | Domain | Resource | Routes |
 |---|---|---|
 | Apps | `client.apps` (+ `.deploys`, `.releases`, `.domains`, `.network`, `.envs`, `.files`, `.analytics`) | 47 |
-| Images | `client.images` | 12 |
+| Images | `client.images` | 13 |
 | Templates | `client.templates` (+ `.deploys`, `.shareLinks`, `.share`, `.updates`) | 32 |
 | Stacks | `client.stacks` (+ `.members`, `.bindings`, `.snapshots`) | 20 |
 | Databases | `client.databases` (+ `.credentials`) | 14 |

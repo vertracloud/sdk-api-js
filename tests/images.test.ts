@@ -10,7 +10,7 @@ const FAKE = "img-1";
 describe("images — wiring", () => {
 	it("client.images exposes every image method", () => {
 		const { client } = makeClient();
-		const methods = ["list", "get", "create", "update", "rebuild", "delete", "versions", "logs", "context", "linkGitHub", "unlinkGitHub", "check"];
+		const methods = ["list", "get", "create", "update", "rebuild", "rebuildFromSource", "delete", "versions", "logs", "context", "linkGitHub", "unlinkGitHub", "check"];
 		for (const method of methods) {
 			assert.equal(typeof (client.images as unknown as Record<string, unknown>)[method], "function", method);
 		}
@@ -226,6 +226,22 @@ describe("images — workspace_id query on the image routes", () => {
 		assert.equal(calls[0]?.init.method, "PUT");
 		assert.equal(calls[0]?.url.searchParams.get("workspace_id"), WS);
 		assert.equal((calls[0]?.init.body as FormData).has("workspace_id"), false);
+	});
+
+	it("rebuildFromSource is a POST with no body and sends ?workspace_id= in the query", async () => {
+		const { client, calls } = makeClient({ jsonBody: { response: { status: "building" } }, status: 202 });
+		const image = await client.images.rebuildFromSource(FAKE, { workspaceId: WS });
+		assert.equal(calls[0]?.init.method, "POST");
+		assert.equal(calls[0]?.url.pathname, `/v1/images/${FAKE}/rebuild`);
+		assert.equal(calls[0]?.url.searchParams.get("workspace_id"), WS);
+		assert.equal(calls[0]?.init.body, undefined);
+		assert.equal(image.status, "building");
+	});
+
+	it("rebuildFromSource without options sends no query", async () => {
+		const { client, calls } = makeClient({ jsonBody: { response: {} } });
+		await client.images.rebuildFromSource(FAKE);
+		assert.equal(calls[0]?.url.search, "");
 	});
 
 	it("publish sends port in the body only when it is given", async () => {

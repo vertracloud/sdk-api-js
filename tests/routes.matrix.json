@@ -472,6 +472,10 @@
 		"path": "/v1/images/:image_id"
 	},
 	{
+		"method": "POST",
+		"path": "/v1/images/:image_id/rebuild"
+	},
+	{
 		"method": "DELETE",
 		"path": "/v1/images/:image_id"
 	},

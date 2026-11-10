@@ -111,6 +111,18 @@ export class ImagesResource {
 	}
 
 	/**
+	 * `POST /v1/images/:id/rebuild` — scope `images:write`. No body. Builds the image again without uploading anything:
+	 * an image linked to GitHub uses the tip of the linked branch, any other uses the build context of the latest build,
+	 * including a failed one (so it also repeats a build that failed). Counts toward the hourly deploy limit.
+	 * Asynchronous: returns with `status: "building"` (HTTP 202); poll `get` until `success` or `failed`. The apps keep
+	 * running the current version until they are restarted or deployed.
+	 * @see https://docs.vertracloud.app/api-reference/endpoint/images/rebuild-source
+	 */
+	rebuildFromSource(id: string, options?: ImageRequestOptions): Promise<APICustomImage> {
+		return this.client.request({ method: "POST", path: `/v1/images/${deferredPathSegment(id)}/rebuild`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs });
+	}
+
+	/**
 	 * `DELETE /v1/images/:id` — scope `images:delete`. Deletes the image, its versions and every app created from it.
 	 * `confirmName` must equal the image name. Returns the ids of the apps deleted with it.
 	 * When the image has apps, the key also needs the `apps:delete` scope.
