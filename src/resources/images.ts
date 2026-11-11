@@ -115,7 +115,8 @@ export class ImagesResource {
 	 * an image linked to GitHub uses the tip of the linked branch, any other uses the build context of the latest build,
 	 * including a failed one (so it also repeats a build that failed). Counts toward the hourly deploy limit.
 	 * Asynchronous: returns with `status: "building"` (HTTP 202); poll `get` until `success` or `failed`. The apps keep
-	 * running the current version until they are restarted or deployed.
+	 * running the current version until they are restarted or deployed, unless the image has `auto_update_apps` on
+	 * (then a successful build restarts them on the new version).
 	 * @see https://docs.vertracloud.app/api-reference/endpoint/images/rebuild-source
 	 */
 	rebuildFromSource(id: string, options?: ImageRequestOptions): Promise<APICustomImage> {
