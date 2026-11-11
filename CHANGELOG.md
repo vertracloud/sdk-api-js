@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.2](https://github.com/vertracloud/sdk-api-js/compare/v0.4.1...v0.4.2) (2026-11-11)
+
+
+### Features
+
+* **images:** rebuild an image from its current source ([10cce23](https://github.com/vertracloud/sdk-api-js/commit/10cce23207c38522e23a53717be268c43d9b6875))
+
 ## [0.4.1](https://github.com/vertracloud/sdk-api-js/compare/v0.4.0...v0.4.1) (2026-11-03)
 
 
