@@ -1,6 +1,6 @@
 import type { VertraClient } from "../client.js";
 import { deferredPathSegment } from "../client.js";
-import type { APIDatabase, APIDatabaseCertificate, APIDatabaseCertificateReset, APIDatabaseMetrics, APIDatabaseOperationResponse, APIDatabasePasswordReset, APIDatabaseStatus, APIDatabaseStatusShort, APIDatabaseVersions, DatabaseType, RequestOptions } from "../types.js";
+import type { APIDatabase, APIDatabaseCertificate, APIDatabaseCertificateReset, APIDatabaseMetrics, APIDatabaseOperationResponse, APIDatabasePasswordReset, APIDatabaseStatus, APIDatabaseStatusShort, APIDatabaseVersions, DatabaseType, RequestOptions, WithRestoreJob } from "../types.js";
 
 export interface CreateDatabaseBody {
 	name: string;
@@ -45,8 +45,14 @@ export class DatabasesResource {
 		return this.client.request({ method: "GET", path: `/v1/databases/${deferredPathSegment(id)}/metrics`, query: { workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs });
 	}
 
-	/** `POST /v1/databases` — scope `databases:write`. @see https://docs.vertracloud.app/api-reference/endpoint/databases/create */
-	create(body: CreateDatabaseBody, options?: RequestOptions): Promise<APIDatabase> {
+	/**
+	 * `POST /v1/databases` — scope `databases:write`. With `snapshot_id` the answer is `202` and carries `restore_job_id`: the database exists and accepts
+	 * connections, and the data comes back in the background; follow the job with `client.snapshotJobs.wait(db.id, db.restore_job_id)`.
+	 * If the restore fails the database is **kept** (empty or with what was written meanwhile), so check the job's `status` and `reason`.
+	 * Can fail with `400 SNAPSHOT_EXCEEDS_STORAGE` (`snapshotExceedsStorage(error)`, `requiredRamMb` says the size that fits).
+	 * @see https://docs.vertracloud.app/api-reference/endpoint/databases/create
+	 */
+	create(body: CreateDatabaseBody, options?: RequestOptions): Promise<WithRestoreJob<APIDatabase>> {
 		return this.client.request({ method: "POST", path: "/v1/databases", body, signal: options?.signal, timeoutMs: options?.timeoutMs });
 	}
 
@@ -65,13 +71,21 @@ export class DatabasesResource {
 		return this.client.request({ method: "POST", path: `/v1/databases/${deferredPathSegment(id)}/stop`, query: { workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs });
 	}
 
-	/** `POST /v1/databases/:id/reset` — scope `databases:write`. @see https://docs.vertracloud.app/api-reference/endpoint/databases/reset */
-	reset(id: string, options?: RequestOptions): Promise<void> {
+	/**
+	 * `POST /v1/databases/:id/reset` — scope `databases:delete`. Resets the database right away. It is permanent: take a snapshot first
+	 * (`snapshots.create`) if you may need the data again. Resolves with `{ status: "success" }`.
+	 * @see https://docs.vertracloud.app/api-reference/endpoint/databases/reset
+	 */
+	reset(id: string, options?: RequestOptions): Promise<APIDatabaseOperationResponse> {
 		return this.client.request({ method: "POST", path: `/v1/databases/${deferredPathSegment(id)}/reset`, query: { workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs });
 	}
 
-	/** `DELETE /v1/databases/:id` — scope `databases:delete`. @see https://docs.vertracloud.app/api-reference/endpoint/databases/delete */
-	delete(id: string, options?: RequestOptions): Promise<void> {
+	/**
+	 * `DELETE /v1/databases/:id` — scope `databases:delete`. Deletes the database right away. It is permanent: take a snapshot first
+	 * (`snapshots.create`) if you may need the data again. Resolves with the id of the database.
+	 * @see https://docs.vertracloud.app/api-reference/endpoint/databases/delete
+	 */
+	delete(id: string, options?: RequestOptions): Promise<string> {
 		return this.client.request({ method: "DELETE", path: `/v1/databases/${deferredPathSegment(id)}`, query: { workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs });
 	}
 
