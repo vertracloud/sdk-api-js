@@ -11,7 +11,7 @@ import { TemplatesResource } from "./resources/templates.js";
 import { WorkspacesResource } from "./resources/workspaces.js";
 import { type SseEvent, parseSseStream } from "./sse.js";
 
-const PACKAGE_VERSION = "0.4.2"; // x-release-please-version
+const PACKAGE_VERSION = "0.4.3"; // x-release-please-version
 const DEFAULT_BASE_URL = "https://api.vertracloud.app";
 const DEFAULT_TIMEOUT_MS = 30_000;
 /** Default for the routes that may wait on a snapshot of their own (up to ~90 s on the server). */
