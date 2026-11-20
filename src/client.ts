@@ -5,7 +5,7 @@ import { BillingResource } from "./resources/billing.js";
 import { DatabasesResource } from "./resources/databases.js";
 import { ImagesResource } from "./resources/images.js";
 import { PlansResource } from "./resources/plans.js";
-import { SnapshotsResource } from "./resources/snapshots.js";
+import { SnapshotJobsResource, SnapshotsResource } from "./resources/snapshots.js";
 import { StacksResource } from "./resources/stacks.js";
 import { TemplatesResource } from "./resources/templates.js";
 import { WorkspacesResource } from "./resources/workspaces.js";
@@ -14,6 +14,10 @@ import { type SseEvent, parseSseStream } from "./sse.js";
 const PACKAGE_VERSION = "0.4.2"; // x-release-please-version
 const DEFAULT_BASE_URL = "https://api.vertracloud.app";
 const DEFAULT_TIMEOUT_MS = 30_000;
+/** Default for the routes that may wait on a snapshot of their own (up to ~90 s on the server). */
+export const SNAPSHOT_TIMEOUT_MS = 120_000;
+/** A download fails when no byte arrives for this long (ms). There is no total deadline: the clock restarts at every chunk. */
+export const DEFAULT_DOWNLOAD_INACTIVITY_MS = 60_000;
 
 export interface VertraClientConfig {
 	/** Bearer token sent as `Authorization: Bearer <apiKey>`. Required. */
@@ -137,6 +141,8 @@ export class VertraClient {
 	readonly stacks: StacksResource;
 	/** `snapshots.*` — see {@link SnapshotsResource}. */
 	readonly snapshots: SnapshotsResource;
+	/** `snapshotJobs.*` — see {@link SnapshotJobsResource}. */
+	readonly snapshotJobs: SnapshotJobsResource;
 	/** `account.*` — see {@link AccountResource}. */
 	readonly account: AccountResource;
 	/** `workspaces.*` — see {@link WorkspacesResource}. */
@@ -160,6 +166,7 @@ export class VertraClient {
 		this.templates = new TemplatesResource(this);
 		this.stacks = new StacksResource(this);
 		this.snapshots = new SnapshotsResource(this);
+		this.snapshotJobs = new SnapshotJobsResource(this);
 		this.account = new AccountResource(this);
 		this.workspaces = new WorkspacesResource(this);
 		this.billing = new BillingResource(this);
@@ -212,12 +219,93 @@ export class VertraClient {
 		}
 	}
 
-	/** Same as {@link request}, but returns the raw binary body (e.g. zip/certificate downloads). */
-	async requestBinary(config: RequestConfig): Promise<ArrayBuffer> {
-		const { response, cleanup } = await this.rawRequest(config);
+	/**
+	 * Same as {@link request}, but returns the raw binary body (a zip, for instance) as a stream: bytes are handed over as they arrive, so memory does not
+	 * grow with the file. `config.timeoutMs` (default: the client's) is the wait for the response headers, and `inactivityTimeoutMs` (default 60 s) is how
+	 * long the body may go without a single byte while the consumer is waiting for one; the clock restarts at every chunk. When it runs out, or when
+	 * `config.signal` aborts, the stream errors (`TimeoutError` or the signal's reason). Cancelling the stream cancels the request.
+	 */
+	async requestStream(config: RequestConfig & { inactivityTimeoutMs?: number }): Promise<ReadableStream<Uint8Array>> {
+		assertValidPath(config.path);
+		const controller = new AbortController();
+		const caller = config.signal;
+		const onAbort = () => controller.abort(caller?.reason);
+		caller?.addEventListener("abort", onAbort);
+		if (caller?.aborted) controller.abort(caller.reason);
+		const release = () => caller?.removeEventListener("abort", onAbort);
+		const headerTimer = setTimeout(() => controller.abort(new DOMException("Timeout", "TimeoutError")), config.timeoutMs ?? this.timeoutMs);
+		let response: Response;
+		try {
+			response = await this.fetchImpl(buildUrl(this.baseUrl, config.path, config.query), { method: config.method, headers: this.headers(config.headers, config.auth !== false), signal: controller.signal });
+			if (!response.ok) throw buildAPIError(response.status, await parseErrorBody(response), response.headers.get("retry-after"));
+		} catch (error) {
+			release();
+			throw error;
+		} finally {
+			clearTimeout(headerTimer);
+		}
+		if (!response.body) {
+			release();
+			return new ReadableStream<Uint8Array>({ start: (c) => c.close() });
+		}
+		const inactivityMs = config.inactivityTimeoutMs ?? DEFAULT_DOWNLOAD_INACTIVITY_MS;
+		const reader = response.body.getReader();
+		return new ReadableStream<Uint8Array>(
+			{
+				async pull(out) {
+					const timer = setTimeout(() => controller.abort(new DOMException(`No data received for ${inactivityMs} ms; the download stalled`, "TimeoutError")), inactivityMs);
+					try {
+						const { done, value } = await reader.read();
+						if (done) {
+							release();
+							out.close();
+						} else out.enqueue(value);
+					} catch (error) {
+						release();
+						out.error(controller.signal.aborted ? controller.signal.reason : error);
+					} finally {
+						clearTimeout(timer);
+					}
+				},
+				cancel(reason) {
+					release();
+					controller.abort(reason);
+				},
+			},
+			{ highWaterMark: 0 },
+		);
+	}
+
+	/**
+	 * Same as {@link requestStream}, but collects the whole body in memory and returns it as an `ArrayBuffer`. Memory grows with the file (the chunks and the final
+	 * buffer coexist for a moment): for a file that can be large use {@link requestStream}.
+	 */
+	async requestBinary(config: RequestConfig & { inactivityTimeoutMs?: number }): Promise<ArrayBuffer> {
+		const reader = (await this.requestStream(config)).getReader();
+		const chunks: Uint8Array[] = [];
+		let length = 0;
+		for (;;) {
+			const { done, value } = await reader.read();
+			if (done) break;
+			chunks.push(value);
+			length += value.byteLength;
+		}
+		const out = new Uint8Array(length);
+		let offset = 0;
+		for (const chunk of chunks) {
+			out.set(chunk, offset);
+			offset += chunk.byteLength;
+		}
+		return out.buffer;
+	}
+
+	/** Like {@link request}, but also returns the HTTP status and the whole JSON body, for routes whose `2xx` answers differ in shape (`201` with a snapshot, `202` with a `job_id`). */
+	async requestWithStatus(config: RequestConfig): Promise<{ status: number; json: Record<string, unknown> }> {
+		const { response, cleanup } = await this.rawRequest(config, config.form ? undefined : "application/json");
 		try {
 			if (!response.ok) throw buildAPIError(response.status, await parseErrorBody(response), response.headers.get("retry-after"));
-			return await response.arrayBuffer();
+			const json = (await response.json().catch(() => ({}))) as Record<string, unknown> | null;
+			return { status: response.status, json: json ?? {} };
 		} finally {
 			cleanup();
 		}

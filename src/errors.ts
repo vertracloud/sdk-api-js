@@ -1,4 +1,5 @@
 import type { APIApplication, APIApplicationAnalyticsRangeExceedsPlanDetails, APITemplateDetachConfirmationDetails, APITemplateUpdateBlocked, APITemplateValidationIssue, DockerfileIssue, DockerfileIssueCode } from "@vertracloud/api-types/v1";
+import type { APISnapshotJob, SnapshotExceedsStorageDetails, SnapshotRateLimitScope } from "./types.js";
 
 /**
  * Error envelope shape sent by the Vertra Cloud API on any non-2xx response:
@@ -86,20 +87,26 @@ function readDockerfileIssues(details: unknown): DockerfileIssue[] {
 }
 
 /**
- * 429 — rate limit or daily quota exceeded. `retryAfter` (seconds) is read from `body.retry_after`
- * first, falling back to the `retry-after` response header.
+ * 429 — rate limit or daily quota exceeded. `retryAfter` (seconds) is read from `body.retry_after`,
+ * then `details.retry_after` (`SNAPSHOT_RATE_LIMITED` sends it there), falling back to the `retry-after` response header.
  */
 export class RateLimitError extends VertraAPIError {
 	readonly retryAfter: number | undefined;
 
 	constructor(status: number, body: VertraAPIErrorBody, retryAfterHeader?: string | null) {
 		super(status, body);
-		this.retryAfter = body.retry_after ?? (retryAfterHeader ? Number(retryAfterHeader) : undefined);
+		this.retryAfter = body.retry_after ?? detailNumber(body.details, "retry_after") ?? (retryAfterHeader ? Number(retryAfterHeader) : undefined);
 	}
 
 	override toJSON(): ReturnType<VertraAPIError["toJSON"]> & { retryAfter: number | undefined } {
 		return { ...super.toJSON(), retryAfter: this.retryAfter };
 	}
+}
+
+function detailNumber(details: unknown, key: string): number | undefined {
+	if (typeof details !== "object" || details === null) return undefined;
+	const value = (details as Record<string, unknown>)[key];
+	return typeof value === "number" ? value : undefined;
 }
 
 /**
@@ -162,7 +169,7 @@ export class AppBuildTimeoutError extends Error {
 
 /** `details` of `error` when it is an API error with the given `code`; `undefined` for anything else. Unreadable details give `{}`. */
 function detailsOfCode(error: unknown, code: string): Record<string, unknown> | undefined {
-	if (!(error instanceof VertraAPIError) || error.code !== code) return undefined;
+	if (!(error instanceof VertraAPIError || error instanceof SnapshotJobError) || error.code !== code) return undefined;
 	return typeof error.details === "object" && error.details !== null ? (error.details as Record<string, unknown>) : {};
 }
 
@@ -220,4 +227,105 @@ export function analyticsRangeExceedsPlan(error: unknown): APIApplicationAnalyti
 export function analyticsBusyRetryAfter(error: unknown): number | undefined {
 	const details = detailsOfCode(error, "ANALYTICS_BUSY");
 	return typeof details?.retry_after === "number" ? details.retry_after : undefined;
+}
+
+/** Codes of the snapshot routes. Same strings as `error.code`. */
+export const SNAPSHOT_ERROR_CODES = {
+	DATABASE_NOT_READY: "DATABASE_NOT_READY",
+	SNAPSHOT_FAILED: "SNAPSHOT_FAILED",
+	SNAPSHOT_TIMEOUT: "SNAPSHOT_TIMEOUT",
+	SNAPSHOT_RATE_LIMITED: "SNAPSHOT_RATE_LIMITED",
+	SNAPSHOT_TOO_LARGE: "SNAPSHOT_TOO_LARGE",
+	/** 409 — a restore is already running on the resource; every write waits for it. */
+	RESTORE_IN_PROGRESS: "RESTORE_IN_PROGRESS",
+	/** 429 — a restore was done too recently on this resource; `details.retry_after` (seconds), see `restoreCooldownRetryAfter(error)`. */
+	RESTORE_COOLDOWN: "RESTORE_COOLDOWN",
+	/** 400 — the snapshot does not fit in the target; see `snapshotExceedsStorage(error)`. */
+	SNAPSHOT_EXCEEDS_STORAGE: "SNAPSHOT_EXCEEDS_STORAGE",
+	SNAPSHOT_CORRUPTED: "SNAPSHOT_CORRUPTED",
+	SNAPSHOT_IMPORT_FAILED: "SNAPSHOT_IMPORT_FAILED",
+	SNAPSHOT_ENGINE_MISMATCH: "SNAPSHOT_ENGINE_MISMATCH",
+	SNAPSHOT_VERSION_NEWER: "SNAPSHOT_VERSION_NEWER",
+	/** A member of a stack restore failed, so the jobs of the members after it end `failed` with this code. */
+	STACK_RESTORE_MEMBER_FAILED: "STACK_RESTORE_MEMBER_FAILED",
+	/** 409 — the app is being deployed; try again when it finishes. */
+	APP_BUILDING: "APP_BUILDING",
+	/** 409 — another operation (for instance a snapshot of the app) is running; try again shortly. */
+	OPERATION_IN_PROGRESS: "OPERATION_IN_PROGRESS",
+} as const;
+
+/**
+ * `details` of a `SNAPSHOT_EXCEEDS_STORAGE` error (400): bytes the snapshot needs and bytes the target has; for databases,
+ * `requiredRamMb` is the smallest memory size that fits it. `undefined` for any other error or when the numbers are missing.
+ */
+export function snapshotExceedsStorage(error: unknown): SnapshotExceedsStorageDetails | undefined {
+	const details = detailsOfCode(error, "SNAPSHOT_EXCEEDS_STORAGE");
+	if (!details || typeof details.required_bytes !== "number" || typeof details.available_bytes !== "number") return undefined;
+	return {
+		requiredBytes: details.required_bytes,
+		availableBytes: details.available_bytes,
+		requiredRamMb: typeof details.required_ram_mb === "number" ? details.required_ram_mb : undefined,
+	};
+}
+
+/** Seconds until a restore of the resource is accepted again, from a `RESTORE_COOLDOWN` error (429). `undefined` for any other error, or when `retry_after` is missing. */
+export function restoreCooldownRetryAfter(error: unknown): number | undefined {
+	const details = detailsOfCode(error, "RESTORE_COOLDOWN");
+	return typeof details?.retry_after === "number" ? details.retry_after : undefined;
+}
+
+/**
+ * Thrown by a wait helper (`snapshotJobs.wait`, `snapshots.createAndWait`, `apps.download`, `stacks.waitFor*`) when its total wait (`waitTimeoutMs`) passes.
+ * The operation itself keeps going on the server. `job` is the last state read of a snapshot job, with its `progress` when it was running.
+ */
+export class WaitTimeoutError extends Error {
+	readonly timeoutMs: number;
+	readonly job?: APISnapshotJob;
+
+	constructor(message: string, timeoutMs: number, job?: APISnapshotJob) {
+		super(message);
+		this.name = "WaitTimeoutError";
+		this.timeoutMs = timeoutMs;
+		this.job = job;
+		Object.setPrototypeOf(this, new.target.prototype);
+	}
+}
+
+/**
+ * Thrown by `snapshotJobs.wait` (and by what waits on it: `snapshots.createAndWait`, `stacks.snapshots.createAndWait`/`restoreAndWait`) when the job ends
+ * `failed` or `skipped`. `reason` is the error code of the job (`SNAPSHOT_FAILED` when the API sent none) and `details` what that code carries on a direct
+ * response (read it with `snapshotExceedsStorage(error)`). `code` repeats `reason`, as on `VertraAPIError`.
+ */
+export class SnapshotJobError extends Error {
+	readonly status: "failed" | "skipped";
+	readonly reason: string;
+	readonly code: string;
+	readonly details: unknown;
+	readonly job: APISnapshotJob;
+
+	constructor(job: APISnapshotJob & { status: "failed" | "skipped" }) {
+		const reason = job.reason ?? "SNAPSHOT_FAILED";
+		super(`${reason}: the ${job.kind} job ${job.id} ended ${job.status}`);
+		this.name = "SnapshotJobError";
+		this.status = job.status;
+		this.reason = reason;
+		this.code = reason;
+		this.details = job.details;
+		this.job = job;
+		Object.setPrototypeOf(this, new.target.prototype);
+	}
+}
+
+/**
+ * `details` of a `SNAPSHOT_RATE_LIMITED` error (429): which limit was hit (`scope`), seconds to wait (`retryAfter`) and, for the
+ * 24-hour account quota, when it frees up (`resetsAt`, ISO date). `undefined` for any other error, or when `scope` is missing.
+ */
+export function snapshotRateLimited(error: unknown): { scope: SnapshotRateLimitScope; retryAfter: number | undefined; resetsAt: string | undefined } | undefined {
+	const details = detailsOfCode(error, "SNAPSHOT_RATE_LIMITED");
+	if (!details || (details.scope !== "resource" && details.scope !== "account")) return undefined;
+	return {
+		scope: details.scope,
+		retryAfter: typeof details.retry_after === "number" ? details.retry_after : undefined,
+		resetsAt: typeof details.resets_at === "string" ? details.resets_at : undefined,
+	};
 }
