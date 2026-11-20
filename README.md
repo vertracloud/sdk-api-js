@@ -270,10 +270,9 @@ While an app is being snapshotted, deploy, rollback, restart/start/stop, env cha
 
 Snapshot limits, answered with `429 SNAPSHOT_RATE_LIMITED` (read it with `snapshotRateLimited(error)`: `scope` is `resource` or `account`, plus `retryAfter` in seconds and, for the account quota, `resetsAt`):
 
-- 8 snapshots per GB of plan RAM in a rolling 24 hours, per account;
-- 1 snapshot every 180 s per resource;
-- 1 request every 5 s per user (a plain `429 RATE_LIMIT_EXCEEDED` with `details.retry_after`, not `SNAPSHOT_RATE_LIMITED`);
-- restore: the wait between restores is answered `429 RESTORE_COOLDOWN` (an app waits 60 s; a database 60 s per user and 120 s per database), not `SNAPSHOT_RATE_LIMITED`.
+- the plan's snapshot quota per account and the interval per resource (the numbers are in the [knowledge base](https://docs.vertracloud.app/knowledge-base));
+- requests that come too fast get a plain `429 RATE_LIMIT_EXCEEDED` with `details.retry_after`, not `SNAPSHOT_RATE_LIMITED`;
+- restore: the wait between restores is answered `429 RESTORE_COOLDOWN` with `details.retry_after`, not `SNAPSHOT_RATE_LIMITED`.
 
 Other codes: `RESTORE_COOLDOWN`, `RESTORE_IN_PROGRESS`, `SNAPSHOT_EXCEEDS_STORAGE`, `SNAPSHOT_CORRUPTED`, `SNAPSHOT_IMPORT_FAILED`, `SNAPSHOT_ENGINE_MISMATCH`, `SNAPSHOT_VERSION_NEWER`, `APP_BUILDING`, `OPERATION_IN_PROGRESS`, `DATABASE_NOT_READY`, `SNAPSHOT_FAILED`, `SNAPSHOT_TIMEOUT` and `SNAPSHOT_TOO_LARGE` (`details.max_bytes`), listed in `SNAPSHOT_ERROR_CODES`. In the file manager, `files.read` and `files.write` handle files up to 10 MiB; larger ones fail with `413 FILE_TOO_LARGE` (`details.max_bytes`).
 

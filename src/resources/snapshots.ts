@@ -106,8 +106,8 @@ export class SnapshotsResource {
 	 * `POST /v1/users/:id/snapshots` — scope `snapshots:write`. One request: resolves with `{ status: "ready", snapshot }` when the snapshot was taken within
 	 * about 90 s, or with `{ status: "accepted", job_id }` when the API answered `202` and is still taking it. Follow `job_id` with
 	 * `client.snapshotJobs.wait`, or use `createAndWait` to do both.
-	 * Limits (`429 SNAPSHOT_RATE_LIMITED`, see `snapshotRateLimited(error)`): 8 snapshots per GB of plan RAM in a rolling 24 hours, one every 180 s
-	 * per resource; faster requests get a plain `429` with `retryAfter`. Waits up to 120 s per request unless `timeoutMs` says otherwise.
+	 * Limits (`429 SNAPSHOT_RATE_LIMITED`, see `snapshotRateLimited(error)`): the plan's snapshot quota per account and an interval per resource
+	 * (see the knowledge base); faster requests get a plain `429` with `retryAfter`. Waits up to 120 s per request unless `timeoutMs` says otherwise.
 	 * @see https://docs.vertracloud.app/api-reference/endpoint/apps/snapshots/create
 	 */
 	async create(resourceId: string, options: SnapshotOptions): Promise<SnapshotCreateResult> {
