@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { describe, it } from "vitest";
+import { describe, it, vi } from "vitest";
 import { NotFoundError, VertraAPIError } from "../src/index.js";
 import { type CapturedCall, makeClient } from "./helpers.js";
 
@@ -120,5 +120,30 @@ describe("database resets — restart notice", () => {
 		const b = makeClient({ jsonBody: { response: { ...notice, password: "p" } } });
 		const pw = await b.client.databases.credentials.password.reset("db-1");
 		assert.equal(pw.restart_required, true);
+	});
+});
+
+describe("stacks — timeouts", () => {
+	/** Delays of the request timers armed while `run` executes. */
+	async function timerDelays(run: () => Promise<unknown>): Promise<number[]> {
+		const spy = vi.spyOn(globalThis, "setTimeout");
+		try {
+			await run();
+			return spy.mock.calls.map((args) => Number(args[1]));
+		} finally {
+			spy.mockRestore();
+		}
+	}
+
+	it("snapshot restore keeps the client default of 30 s", async () => {
+		const { client } = makeClient({ jsonBody: { response: {} } });
+		const restore = await timerDelays(() => client.stacks.snapshots.restore("st-1", "snap-1"));
+		assert.ok(restore.includes(30_000) && !restore.includes(120_000), `restore: ${restore}`);
+	});
+
+	it("a per-call timeoutMs wins over the default", async () => {
+		const { client } = makeClient({ jsonBody: { response: {} } });
+		const restore = await timerDelays(() => client.stacks.snapshots.restore("st-1", "snap-1", undefined, { timeoutMs: 7_000 }));
+		assert.ok(restore.includes(7_000) && !restore.includes(30_000));
 	});
 });
