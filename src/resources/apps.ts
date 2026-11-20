@@ -1,6 +1,7 @@
 import type { VertraClient } from "../client.js";
 import { deferredPathSegment } from "../client.js";
-import { AppBuildFailedError, AppBuildTimeoutError } from "../errors.js";
+import type { DownloadedFile } from "../download.js";
+import { AppBuildFailedError, AppBuildTimeoutError, VertraAPIError } from "../errors.js";
 import type { SseEvent } from "../sse.js";
 import type {
 	APIApplication,
@@ -30,6 +31,7 @@ import type {
 	APIApplicationWebPublish,
 	APIApplicationWebhook,
 	APIApplicationWebhookUrl,
+	APISnapshotJob,
 	ApplicationAnalyticsDimension,
 	ApplicationLanguage,
 	FileContentQuery,
@@ -52,7 +54,23 @@ import type {
 	RESTPostAPIApplicationWebhookCreateBody,
 	RESTPutAPIApplicationFileBody,
 	RequestOptions,
+	WithRestoreJob,
 } from "../types.js";
+
+/**
+ * Options of `apps.download`. The key needs `snapshots:write` (to take the snapshot) and `snapshots:read` (to download it). `timeoutMs` is the limit of
+ * each request (the download itself has no total deadline, see `inactivityTimeoutMs`); `waitTimeoutMs` is the total wait for the snapshot.
+ */
+export interface DownloadOptions extends RequestOptions {
+	/** Poll interval in ms while the snapshot is taken. Default `2000`. */
+	intervalMs?: number;
+	/** Total wait in ms for the snapshot before `WaitTimeoutError` (it keeps being taken and shows in the snapshot list). Default `1800000` (30 min). */
+	waitTimeoutMs?: number;
+	/** The download fails with a `TimeoutError` when no byte arrives for this many ms; the clock restarts at every chunk. Default `60000`. */
+	inactivityTimeoutMs?: number;
+	/** Called with the snapshot job on every poll while it has not ended. */
+	onProgress?: (job: APISnapshotJob) => void;
+}
 
 export interface CreateAppOptions extends RequestOptions {
 	/** Zip of the application. Mutually exclusive with `snapshotId`. */
@@ -144,17 +162,69 @@ export class AppsResource {
 		return this.client.request({ method: "GET", path: `/v1/apps/${deferredPathSegment(id)}/logs`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs });
 	}
 
-	/** `GET /v1/apps/:id/download` — scope `apps:read`. Returns the app's zip as an `ArrayBuffer`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/download */
-	download(id: string, options?: RequestOptions): Promise<ArrayBuffer> {
-		return this.client.requestBinary({ method: "GET", path: `/v1/apps/${deferredPathSegment(id)}/download`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs ?? 120_000 });
+	/**
+	 * Downloads the whole app as a zip (`ArrayBuffer`), whatever its size. There is no route of its own: it takes a manual snapshot
+	 * (`POST /v1/users/:id/snapshots?scope=applications`, scope `snapshots:write`), follows the job when the API answers `202`, and downloads that snapshot
+	 * (`GET /v1/users/:id/snapshots/:snapshot_id/download`, scope `snapshots:read`): the API key needs both scopes. The snapshot is a manual one and stays in
+	 * the snapshot list. Limits: `429 SNAPSHOT_RATE_LIMITED` (`snapshotRateLimited(error)`); an account without a plan cannot take a snapshot (`403 PLAN_NOT_ALLOWED`),
+	 * but can download the ones it already has with `snapshots.download`. Throws `SnapshotJobError` when the job fails and `WaitTimeoutError` after `waitTimeoutMs`.
+	 * The zip has no total deadline: it fails only after `inactivityTimeoutMs` without a byte, or when `signal` aborts.
+	 * The whole zip is held in memory (and briefly twice): for an app that can be large, use `downloadToFile` (writes to disk as the bytes arrive) or `downloadStream`.
+	 * @see https://docs.vertracloud.app/api-reference/endpoint/apps/snapshots/create
+	 */
+	async download(id: string, options: DownloadOptions = {}): Promise<ArrayBuffer> {
+		const snapshotId = await this.snapshotForDownload(id, options);
+		const { signal, timeoutMs, inactivityTimeoutMs, workspaceId } = options;
+		return this.client.snapshots.download(id, snapshotId, { scope: "applications", workspaceId, signal, timeoutMs, inactivityTimeoutMs });
+	}
+
+	/**
+	 * Same as `download` (takes the manual snapshot, follows the job, downloads it) but resolves with a `ReadableStream<Uint8Array>` that hands over the zip as
+	 * it arrives: memory does not grow with the app. Same scopes, limits and errors as `download`.
+	 */
+	async downloadStream(id: string, options: DownloadOptions = {}): Promise<ReadableStream<Uint8Array>> {
+		const snapshotId = await this.snapshotForDownload(id, options);
+		const { signal, timeoutMs, inactivityTimeoutMs, workspaceId } = options;
+		return this.client.snapshots.downloadStream(id, snapshotId, { scope: "applications", workspaceId, signal, timeoutMs, inactivityTimeoutMs });
+	}
+
+	/**
+	 * Same as `download`, written to `path` as the bytes arrive: memory stays constant, whatever the size of the app. The zip goes to a temporary file next to
+	 * `path`, renamed to `path` only when the download ends; on failure, `inactivityTimeoutMs` or `signal` the temporary file is removed, and `path` never holds a
+	 * partial file. Node.js only. Resolves with `{ path, bytes }`. Same scopes, limits and errors as `download`.
+	 */
+	async downloadToFile(id: string, path: string, options: DownloadOptions = {}): Promise<DownloadedFile> {
+		const snapshotId = await this.snapshotForDownload(id, options);
+		const { signal, timeoutMs, inactivityTimeoutMs, workspaceId } = options;
+		return this.client.snapshots.downloadToFile(id, snapshotId, path, { scope: "applications", workspaceId, signal, timeoutMs, inactivityTimeoutMs });
+	}
+
+	private async snapshotForDownload(id: string, options: DownloadOptions): Promise<string> {
+		const { signal, timeoutMs, intervalMs, waitTimeoutMs, onProgress, workspaceId } = options;
+		const scope = "applications";
+		const created = await this.client.snapshots.create(id, { scope, workspaceId, signal, timeoutMs });
+		let snapshotId: string | undefined;
+		if (created.status === "ready") snapshotId = created.snapshot.id;
+		else {
+			const job = await this.client.snapshotJobs.wait(id, created.job_id, { scope, workspaceId, signal, timeoutMs, intervalMs, waitTimeoutMs, onProgress });
+			snapshotId = job.snapshot_id;
+		}
+		if (!snapshotId) throw new VertraAPIError(404, { code: "SNAPSHOT_NOT_FOUND", message: `The snapshot of app ${id} is ready but its id did not come back` });
+		return snapshotId;
 	}
 
 	/**
 	 * `POST /v1/apps` — scope `apps:write`. `multipart/form-data`. Exactly one of `file`/`snapshotId`
 	 * must be given. Asynchronous: resolves in seconds with the app in `status: "building"` (HTTP 202);
-	 * use `waitUntilReady` to follow it to `up`/`down`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/create
+	 * use `waitUntilReady` to follow it to `up`/`down`.
+	 *
+	 * With `snapshotId` the answer is `202` and carries `restore_job_id`: the app exists, and its files come back in the background. Follow the
+	 * job with `client.snapshotJobs.wait(app.id, app.restore_job_id)`. If the restore fails, an app of code is deleted by
+	 * the API; an app on a custom Docker image is kept as it is (empty or as it was), so check the job's `status`. `warning` is
+	 * `IMAGE_VERSION_NOT_FOUND` when the image version recorded in the snapshot is gone. Can fail with `400 SNAPSHOT_EXCEEDS_STORAGE`
+	 * (`snapshotExceedsStorage(error)`). @see https://docs.vertracloud.app/api-reference/endpoint/apps/create
 	 */
-	create(options: CreateAppOptions): Promise<APIApplication> {
+	create(options: CreateAppOptions): Promise<WithRestoreJob<APIApplication>> {
 		const form = new FormData();
 		if (options.file) form.set("file", options.file, "app.zip");
 		if (options.snapshotId) form.set("snapshot_id", options.snapshotId);
@@ -232,7 +302,11 @@ export class AppsResource {
 		return this.client.request({ method: "PATCH", path: `/v1/apps/${deferredPathSegment(id)}/config`, query: withWorkspace(options), body, signal: options?.signal, timeoutMs: options?.timeoutMs });
 	}
 
-	/** `DELETE /v1/apps/:id` — scope `apps:delete`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/delete */
+	/**
+	 * `DELETE /v1/apps/:id` — scope `apps:delete`. Deletes the app right away. It is permanent: take a snapshot first (`snapshots.create`)
+	 * if you may need the data again.
+	 * @see https://docs.vertracloud.app/api-reference/endpoint/apps/delete
+	 */
 	delete(id: string, options?: RequestOptions): Promise<void> {
 		return this.client.request({ method: "DELETE", path: `/v1/apps/${deferredPathSegment(id)}`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs });
 	}
@@ -389,7 +463,7 @@ export class AppsResource {
 		/** `GET /v1/apps/:id/files/tree` — scope `apps:files`. */
 		tree: (id: string, options?: RequestOptions): Promise<APIApplicationFileTree[]> => this.client.request({ method: "GET", path: `/v1/apps/${deferredPathSegment(id)}/files/tree`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
-		/** `GET /v1/apps/:id/files/content` — scope `apps:files`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/filemanager/content */
+		/** `GET /v1/apps/:id/files/content` — scope `apps:files`. Files above 10 MiB are refused with `413 FILE_TOO_LARGE` (`details.max_bytes`). @see https://docs.vertracloud.app/api-reference/endpoint/apps/filemanager/content */
 		read: (id: string, query: FileContentQuery, options?: RequestOptions): Promise<APIApplicationFileContent> =>
 			this.client.request({ method: "GET", path: `/v1/apps/${deferredPathSegment(id)}/files/content`, query: { ...query, workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
@@ -399,6 +473,7 @@ export class AppsResource {
 		 * nothing (read the action with `templateDetachConfirmation(error)`); with it the change is made and the application is detached. Ignored
 		 * for an application that does not come from a template. The same `confirm_detach` exists on `files.move`, `files.delete`,
 		 * `deploys.webhook.create` and, as `confirmDetach`, on `files.upload`.
+		 * A file above 10 MiB is refused with `413 FILE_TOO_LARGE` (`details.max_bytes`).
 		 */
 		write: (id: string, body: RESTPutAPIApplicationFileBody, options?: RequestOptions): Promise<void> => this.client.request({ method: "PUT", path: `/v1/apps/${deferredPathSegment(id)}/files`, body: { ...body, workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 

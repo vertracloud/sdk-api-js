@@ -89,10 +89,6 @@
 	},
 	{
 		"method": "GET",
-		"path": "/v1/apps/:id/download"
-	},
-	{
-		"method": "GET",
 		"path": "/v1/apps/:id/envs"
 	},
 	{
@@ -206,6 +202,14 @@
 	{
 		"method": "GET",
 		"path": "/v1/users/:id/snapshots/:snapshot_id/download"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/users/:id/snapshots/jobs"
+	},
+	{
+		"method": "GET",
+		"path": "/v1/users/:id/snapshots/jobs/:job_id"
 	},
 	{
 		"method": "GET",

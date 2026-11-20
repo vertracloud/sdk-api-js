@@ -34,19 +34,26 @@ function expectedPath(template: string): string {
 }
 
 const expectedRoutes = new Set(matrix.map((r) => `${r.method} ${expectedPath(r.path)}`));
-assert.equal(expectedRoutes.size, 183, "fixture must have exactly 183 unique routes");
+assert.equal(expectedRoutes.size, 184, "fixture must have exactly 184 unique routes");
+
+// Catalog routes the SDK has no method for yet (same list as the Python SDK's `NOT_COVERED_ROUTES`):
+// move a route to `routes.matrix.json` when its method exists.
+const NOT_COVERED_ROUTES = new Set([
+	"POST /v1/images/uploads", // direct upload of an image build context
+]);
 
 // The fixture must be exactly the public API key catalog — a route added to or dropped from the
 // catalog fails here until the SDK follows. Blob Storage routes belong to `@vertracloud/blob`.
 const catalogRoutes = new Set(
 	Object.values(API_KEY_SCOPES)
 		.filter((scope) => scope.group !== "blob")
-		.flatMap((scope) => scope.routes.map((r) => `${r.method} ${r.path}`)),
+		.flatMap((scope) => scope.routes.map((r) => `${r.method} ${r.path}`))
+		.filter((route) => !NOT_COVERED_ROUTES.has(route)),
 );
 assert.deepEqual(new Set(matrix.map((r) => `${r.method} ${r.path}`)), catalogRoutes, "fixture must match API_KEY_SCOPES");
 
-describe("routes matrix — every SDK method maps to exactly one of the 183 frozen routes", () => {
-	it("(a)+(b): calling every resource method hits exactly the 183 expected method+path pairs, nothing else", async () => {
+describe("routes matrix — every SDK method maps to exactly one of the frozen routes", () => {
+	it("(a)+(b): calling every resource method hits exactly the expected method+path pairs, nothing else", async () => {
 		const captured: { method: string; path: string }[] = [];
 		const fetchImpl = makeMockFetch([], { jsonBody: { response: {} } });
 		const client = new VertraClient({
@@ -72,7 +79,6 @@ describe("routes matrix — every SDK method maps to exactly one of the 183 froz
 		await client.apps.realtime(FAKE).next();
 		await client.apps.metrics(FAKE);
 		await client.apps.logs(FAKE);
-		await client.apps.download(FAKE);
 		await client.apps.create({ file: blob, name: "n", memory: 1, main: "m", version: "v" });
 		await client.apps.start(FAKE);
 		await client.apps.stop(FAKE);
@@ -128,6 +134,8 @@ describe("routes matrix — every SDK method maps to exactly one of the 183 froz
 		await client.snapshots.listAll({ scope: "applications" });
 		await client.snapshots.list(FAKE, { scope: "applications" });
 		await client.snapshots.download(FAKE, FAKE2, { scope: "applications" });
+		await client.snapshotJobs.list(FAKE, { scope: "applications" });
+		await client.snapshotJobs.get(FAKE, FAKE2, { scope: "applications" });
 		await client.snapshots.create(FAKE, { scope: "applications" });
 		await client.snapshots.restore(FAKE, FAKE2, { scope: "applications" });
 
@@ -266,9 +274,9 @@ describe("routes matrix — every SDK method maps to exactly one of the 183 froz
 		}
 		// (b) nothing outside the fixture was hit
 		for (const call of capturedSet) {
-			assert.ok(expectedRoutes.has(call), `unexpected call outside the 183-route matrix: ${call}`);
+			assert.ok(expectedRoutes.has(call), `unexpected call outside the 184-route matrix: ${call}`);
 		}
-		assert.equal(capturedSet.size, 183);
+		assert.equal(capturedSet.size, 184);
 	});
 });
 

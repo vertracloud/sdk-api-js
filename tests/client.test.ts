@@ -228,14 +228,6 @@ describe("VertraClient — multipart", () => {
 });
 
 describe("VertraClient — binary responses", () => {
-	it("apps.download returns an ArrayBuffer", async () => {
-		const bytes = new TextEncoder().encode("zip-content").buffer;
-		const { client } = makeClient({ arrayBufferBody: bytes });
-		const result = await client.apps.download("app-1");
-		assert.ok(result instanceof ArrayBuffer);
-		assert.equal(Buffer.from(result).toString(), "zip-content");
-	});
-
 	it("snapshots.download returns an ArrayBuffer", async () => {
 		const bytes = new TextEncoder().encode("snap-content").buffer;
 		const { client } = makeClient({ arrayBufferBody: bytes });
