@@ -302,7 +302,7 @@ export class TemplatesResource {
 		appInfo: (appId: string, options?: RequestOptions): Promise<APITemplateUpdateInfo> => this.client.request({ method: "GET", path: `/v1/apps/${deferredPathSegment(appId)}/template/update`, query: withWorkspace(options), signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
 		/**
-		 * `POST /v1/apps/:id/template/update` — scope `templates:deploy`. Takes a safety snapshot, updates and, if it fails, goes back to the
+		 * `POST /v1/apps/:id/template/update` — scope `templates:deploy`. Takes a snapshot, updates and, if it fails, goes back to the
 		 * snapshot. Never automatic. Returns the job (`kind: "update"`). @see https://docs.vertracloud.app/api-reference/endpoint/templates/update
 		 */
 		appUpdate: (appId: string, body?: RESTPostAPITemplateUpdateBody, options?: RequestOptions): Promise<APITemplateDeploy> =>
