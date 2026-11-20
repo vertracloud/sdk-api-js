@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.4.3](https://github.com/vertracloud/sdk-api-js/compare/v0.4.2...v0.4.3) (2026-11-20)
+
+
+### Features
+
+* **apps:** download an app through a manual snapshot ([fd3d3b8](https://github.com/vertracloud/sdk-api-js/commit/fd3d3b868b7957d7a85c320ba73a776cb6e30368))
+* **databases:** reset and delete run right away ([e2c8beb](https://github.com/vertracloud/sdk-api-js/commit/e2c8beb9f59af6ae1725b30159cd0aa6c4dc687c))
+* **snapshots:** follow snapshot and restore jobs and stream downloads ([7260aa9](https://github.com/vertracloud/sdk-api-js/commit/7260aa936b788acd70dc7fd785f94604dbea7ff8))
+
 ## [0.4.2](https://github.com/vertracloud/sdk-api-js/compare/v0.4.1...v0.4.2) (2026-11-11)
 
 
