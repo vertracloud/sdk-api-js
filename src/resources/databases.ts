@@ -1,6 +1,6 @@
 import type { VertraClient } from "../client.js";
 import { deferredPathSegment } from "../client.js";
-import type { APIDatabase, APIDatabaseCertificate, APIDatabaseCertificateReset, APIDatabaseMetrics, APIDatabaseOperationResponse, APIDatabasePasswordReset, APIDatabaseStatus, APIDatabaseStatusShort, APIDatabaseVersions, DatabaseType, RequestOptions, WithRestoreJob } from "../types.js";
+import type { APIDatabase, APIDatabaseCertificate, APIDatabaseCertificateReset, APIDatabaseMetrics, APIDatabaseOperationResponse, APIDatabasePasswordReset, APIDatabaseStatus, APIDatabaseStatusShort, APIDatabaseVersions, DatabaseCreated, DatabaseType, RequestOptions } from "../types.js";
 
 export interface CreateDatabaseBody {
 	name: string;
@@ -50,9 +50,10 @@ export class DatabasesResource {
 	 * connections, and the data comes back in the background; follow the job with `client.snapshotJobs.wait(db.id, db.restore_job_id)`.
 	 * If the restore fails the database is **kept** (empty or with what was written meanwhile), so check the job's `status` and `reason`.
 	 * Can fail with `400 SNAPSHOT_EXCEEDS_STORAGE` (`snapshotExceedsStorage(error)`, `requiredRamMb` says the size that fits).
+	 * `password` comes only in this response; afterwards only `credentials.password.reset` gives a new one.
 	 * @see https://docs.vertracloud.app/api-reference/endpoint/databases/create
 	 */
-	create(body: CreateDatabaseBody, options?: RequestOptions): Promise<WithRestoreJob<APIDatabase>> {
+	create(body: CreateDatabaseBody, options?: RequestOptions): Promise<DatabaseCreated> {
 		return this.client.request({ method: "POST", path: "/v1/databases", body, signal: options?.signal, timeoutMs: options?.timeoutMs });
 	}
 
@@ -97,7 +98,7 @@ export class DatabasesResource {
 			 */
 			get: (id: string, options?: RequestOptions): Promise<APIDatabaseCertificate> => this.client.request({ method: "GET", path: `/v1/databases/${deferredPathSegment(id)}/credentials/certificate`, query: { workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
-			/** `POST /v1/databases/:id/credentials/certificate/reset` — scope `databases:credentials`. Returns the new certificate and which applications of connected stacks must restart to read it (`restart_required`, `apps_to_restart`). @see https://docs.vertracloud.app/api-reference/endpoint/databases/credentials/reset */
+			/** `POST /v1/databases/:id/credentials/certificate/reset` — scope `databases:credentials`. Returns the new certificate and which applications of connected stacks must restart to read it (`restart_required`, `apps_to_restart`). `host` is the address the new certificate is issued for, and `client_variables_with_old_host` lists the app variables that still hold the old one (empty when the address does not change). On a database with `legacy_host: true` the new certificate moves the database to the current address, which is done only from the dashboard: with an API key this call rejects with 403 `WEBSITE_ONLY`. @see https://docs.vertracloud.app/api-reference/endpoint/databases/credentials/reset */
 			reset: (id: string, options?: RequestOptions): Promise<APIDatabaseCertificateReset> => this.client.request({ method: "POST", path: `/v1/databases/${deferredPathSegment(id)}/credentials/certificate/reset`, query: { workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 		},
 

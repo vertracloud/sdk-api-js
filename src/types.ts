@@ -1,4 +1,4 @@
-import type { APIResourceSnapshot, APISnapshotCreateAccepted, APISnapshotImageWarning } from "@vertracloud/api-types/v1";
+import type { APIDatabase, APIResourceSnapshot, APISnapshotCreateAccepted, APISnapshotImageWarning } from "@vertracloud/api-types/v1";
 
 export * from "@vertracloud/api-types/v1";
 
@@ -32,6 +32,9 @@ export interface SnapshotExceedsStorageDetails {
 
 /** A resource created from a snapshot (HTTP 202): `restore_job_id` is the restore job to follow with `client.snapshotJobs`. */
 export type WithRestoreJob<T> = T & { restore_job_id?: string; warning?: APISnapshotImageWarning };
+
+/** Result of `databases.create`: the database plus its `password`, returned only by this call. */
+export type DatabaseCreated = WithRestoreJob<APIDatabase & { password: string }>;
 
 /**
  * Result of `snapshots.create`: the snapshot (`ready`), or `accepted` with the `job_id` to follow with `client.snapshotJobs` (the snapshot is

@@ -17,6 +17,7 @@ import type {
 	APIApplicationEnvironment,
 	APIApplicationFile,
 	APIApplicationFileContent,
+	APIApplicationFileDelete,
 	APIApplicationFileTree,
 	APIApplicationFileUpload,
 	APIApplicationMetric,
@@ -89,6 +90,8 @@ export interface CreateAppOptions extends RequestOptions {
 	build?: string;
 	subdomain?: string;
 	envs?: { key: string; value: string; note?: string }[];
+	/** Restart the app on its own when it stops unexpectedly. The platform default is `true`; sent only when given. */
+	autoRestart?: boolean;
 }
 
 export interface WaitUntilReadyOptions extends RequestOptions {
@@ -139,13 +142,15 @@ export class AppsResource {
 
 	/**
 	 * `GET /v1/apps/:id/realtime` — scope `apps:read`. Server-Sent Events stream of live logs and
-	 * system notes. `since` is a cursor timestamp to resume from.
+	 * system notes. `since` is a cursor timestamp to resume from. Event types: `logs`, `next_logs` (output of the new version during a zero-downtime
+	 * deploy), `system`, `metrics` and `heartbeat`. `metrics: true` adds a `metrics` event about every 5 seconds; read its `data` with `parseLiveMetrics`.
+	 * Notes resent when the connection starts come prefixed with their time (`<ISO 8601> <note>`); live ones have no prefix.
 	 */
-	realtime(id: string, options?: RequestOptions & { since?: number; idleTimeoutMs?: number }): AsyncGenerator<SseEvent, void, unknown> {
+	realtime(id: string, options?: RequestOptions & { since?: number; metrics?: boolean; idleTimeoutMs?: number }): AsyncGenerator<SseEvent, void, unknown> {
 		return this.client.requestSse({
 			method: "GET",
 			path: `/v1/apps/${deferredPathSegment(id)}/realtime`,
-			query: { workspace_id: options?.workspaceId, since: options?.since },
+			query: { workspace_id: options?.workspaceId, since: options?.since, metrics: options?.metrics },
 			signal: options?.signal,
 			timeoutMs: options?.timeoutMs,
 			idleTimeoutMs: options?.idleTimeoutMs,
@@ -236,6 +241,7 @@ export class AppsResource {
 		if (options.language !== undefined) form.set("language", options.language);
 		if (options.start !== undefined) form.set("start", options.start);
 		if (options.build !== undefined) form.set("build", options.build);
+		if (options.autoRestart !== undefined) form.set("auto_restart", String(options.autoRestart));
 		if (options.subdomain !== undefined) form.set("subdomain", options.subdomain);
 		if (options.workspaceId !== undefined) form.set("workspace_id", options.workspaceId);
 		if (options.envs !== undefined) form.set("envs", JSON.stringify(options.envs));
@@ -297,7 +303,8 @@ export class AppsResource {
 	 * `PATCH /v1/apps/:id/config` — scope `apps:write`. `deploy` sets zero downtime, automatic rollback
 	 * and the health check path (`null` clears it). Plan-gated: `zero_downtime: "on"` fails with 403
 	 * `PLAN_DOES_NOT_SUPPORT_ZERO_DOWNTIME` and `auto_rollback: true` with 403
-	 * `PLAN_DOES_NOT_SUPPORT_AUTO_ROLLBACK`. @see https://docs.vertracloud.app/api-reference/endpoint/apps/updateconfig */
+	 * `PLAN_DOES_NOT_SUPPORT_AUTO_ROLLBACK`. `auto_restart` turns the automatic restart on or off without recreating or reinstalling
+	 * the app. @see https://docs.vertracloud.app/api-reference/endpoint/apps/updateconfig */
 	updateConfig(id: string, body: RESTPatchAPIApplicationUpdateConfigBody, options?: RequestOptions): Promise<string> {
 		return this.client.request({ method: "PATCH", path: `/v1/apps/${deferredPathSegment(id)}/config`, query: withWorkspace(options), body, signal: options?.signal, timeoutMs: options?.timeoutMs });
 	}
@@ -481,7 +488,8 @@ export class AppsResource {
 		move: (id: string, body: RESTPatchAPIApplicationFileMoveBody, options?: RequestOptions): Promise<void> => this.client.request({ method: "PATCH", path: `/v1/apps/${deferredPathSegment(id)}/files`, body: { ...body, workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
 		/** `DELETE /v1/apps/:id/files` — scope `apps:files`. */
-		delete: (id: string, body: RESTDeleteAPIApplicationFileBody, options?: RequestOptions): Promise<void> => this.client.request({ method: "DELETE", path: `/v1/apps/${deferredPathSegment(id)}/files`, body: { ...body, workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs }),
+		delete: (id: string, body: RESTDeleteAPIApplicationFileBody, options?: RequestOptions): Promise<APIApplicationFileDelete> =>
+			this.client.request({ method: "DELETE", path: `/v1/apps/${deferredPathSegment(id)}/files`, body: { ...body, workspace_id: options?.workspaceId }, signal: options?.signal, timeoutMs: options?.timeoutMs }),
 
 		/**
 		 * `POST /v1/apps/:id/files/upload` — scope `apps:files`. `multipart/form-data`, field `file`.

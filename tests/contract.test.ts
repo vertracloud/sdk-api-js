@@ -225,6 +225,13 @@ const cases: ContractCase[] = [
 		body: { deploy: { zero_downtime: "auto", auto_rollback: true, health_check_path: null } },
 	},
 	{
+		name: "apps.updateConfig — auto_restart goes at the top level of the body",
+		call: (c) => c.apps.updateConfig(FAKE, { auto_restart: false }),
+		method: "PATCH",
+		path: `/v1/apps/${FAKE}/config`,
+		body: { auto_restart: false },
+	},
+	{
 		name: "apps.envs.set — snake_case env fields",
 		call: (c) => c.apps.envs.set(FAKE, { key: "K", value: "V", note: "n" }),
 		method: "POST",
@@ -384,6 +391,31 @@ describe("contract — multipart field names", () => {
 		assert.equal(form.get("name"), "meu-app");
 		assert.equal(form.get("memory"), "256");
 		assert.equal(form.get("envs"), JSON.stringify([{ key: "K", value: "V" }]));
+	});
+
+	it("apps.create — autoRestart is a true/false text part and absent when not given", async () => {
+		const sent = async (autoRestart?: boolean) => {
+			const calls: CapturedCall[] = [];
+			const { client } = makeClient({ jsonBody: { response: {} } }, calls);
+			await client.apps.create({ file: new Blob(["zip"]), name: "a", memory: 256, autoRestart });
+			return calls[0]?.init.body as FormData;
+		};
+		assert.equal((await sent(false)).get("auto_restart"), "false");
+		assert.equal((await sent(true)).get("auto_restart"), "true");
+		assert.equal((await sent()).has("auto_restart"), false);
+	});
+
+	it("apps.files.delete — resolves with space_released", async () => {
+		const { client } = makeClient({ jsonBody: { response: { space_released: "on_restart" } } });
+		const result = await client.apps.files.delete(FAKE, { path: "/log.txt" });
+		assert.deepEqual(result, { space_released: "on_restart" });
+		assert.equal(result.space_released, "on_restart");
+	});
+
+	it("databases.create — resolves with the password the API returns once", async () => {
+		const { client } = makeClient({ status: 201, jsonBody: { response: { id: "db-1", password: "pw-once" } } });
+		const db = await client.databases.create({ name: "meu-db", type: 1, ram: 512 });
+		assert.equal(db.password, "pw-once");
 	});
 
 	it("apps.files.upload — field name is exactly `file`, restart serialized as string", async () => {

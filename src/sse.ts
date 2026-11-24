@@ -1,8 +1,11 @@
+import type { APIApplicationLiveMetrics } from "@vertracloud/api-types/v1";
+
 /**
  * Parser for the `text/event-stream` response of `GET /v1/apps/:id/realtime`. Standard SSE wire
  * format: a block of `event: <name>\n` + `data: <text>\n` lines terminated by a blank line. `id:`
  * fields, if present, are tolerated but ignored. `data` is always a single opaque string
- * (`"heartbeat"`, a log line, a status note, ...), never JSON — the SDK never attempts to parse it.
+ * (`"heartbeat"`, a log line, a status note, ...): the stream never parses it. The `metrics` event carries JSON;
+ * read it with {@link parseLiveMetrics}.
  */
 export interface SseEvent {
 	event: string;
@@ -119,6 +122,21 @@ async function raceWithIdleTimeout<T>(promise: Promise<T>, idleTimeoutMs: number
 		]);
 	} finally {
 		if (timer) clearTimeout(timer);
+	}
+}
+
+/**
+ * Reads the `data` of a `metrics` event (`apps.realtime(id, { metrics: true })`) as {@link APIApplicationLiveMetrics}.
+ * Returns `null` for any other event or when the data is not a valid reading.
+ */
+export function parseLiveMetrics(event: SseEvent): APIApplicationLiveMetrics | null {
+	if (event.event !== "metrics") return null;
+	try {
+		const value: unknown = JSON.parse(event.data);
+		if (value === null || typeof value !== "object" || typeof (value as { at?: unknown }).at !== "string") return null;
+		return value as APIApplicationLiveMetrics;
+	} catch {
+		return null;
 	}
 }
 

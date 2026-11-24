@@ -29,7 +29,7 @@ export type { VertraAPIErrorBody } from "./errors.js";
 
 export type { DownloadedFile } from "./download.js";
 
-export { parseSseStream, SseIdleTimeoutError } from "./sse.js";
+export { parseLiveMetrics, parseSseStream, SseIdleTimeoutError } from "./sse.js";
 export type { SseEvent, SseParseOptions } from "./sse.js";
 
 export { AccountResource } from "./resources/account.js";

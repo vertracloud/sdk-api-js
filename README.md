@@ -124,6 +124,21 @@ for await (const event of client.apps.realtime(appId)) {
 
 Stop the stream with `break` or an `AbortSignal`. Pass `idleTimeoutMs` to also stop when no event arrives in time, and `since` to resume. There is no automatic reconnection.
 
+Event types: `logs` (the app's output), `next_logs` (the output of the new version during a zero-downtime deploy, same format as `logs`), `system` (console notes), `metrics` and `heartbeat`. Notes resent when the connection starts come with their time in front (`<ISO 8601> <note>`); live ones have no prefix.
+
+Pass `metrics: true` to also receive a `metrics` event about every 5 seconds with the live CPU, memory and network reading. Its `data` is JSON; `parseLiveMetrics` returns it as `APIApplicationLiveMetrics` (`null` for any other event):
+
+```ts
+import { parseLiveMetrics } from "@vertracloud/sdk-api";
+
+for await (const event of client.apps.realtime(appId, { metrics: true })) {
+	const live = parseLiveMetrics(event);
+	if (live) console.log(`${live.cpu_percent}% CPU, ${live.memory_bytes} bytes`);
+}
+```
+
+`apps.metrics` and `databases.metrics` also return `events` in each reading: the restarts and crashes of the period (`kind`: `restart`, `auto_restart` or `crash`), each with its `at` time and `out_of_memory`.
+
 ### Custom images
 
 An image is a build context with a `Dockerfile`. Create it from a ZIP file or from a GitHub repository, then run apps from it. Builds run in the background: `create` returns with `status: "building"`.
@@ -199,7 +214,12 @@ if (change.restart_required) for (const id of change.apps_to_restart) await clie
 const catalog = await client.databases.versions();
 const db = await client.databases.create({ name: "meu-db", type: 1, ram: 512, version: catalog[1].recommended });
 console.log(db.version); // major line, e.g. "18"
+console.log(db.password); // returned only by this call
 ```
+
+The password comes only in the `databases.create` response; afterwards `databases.credentials.password.reset` issues a new one.
+
+A database with `legacy_host: true` still uses the previous address. Moving it to the current address (`databases.credentials.certificate.reset`) is done only from the dashboard: with an API key the call rejects with 403 `WEBSITE_ONLY`.
 
 Omit `version` to get the recommended one; with `snapshot_id`, omit it to keep the snapshot's line (an older one fails with `SNAPSHOT_VERSION_NEWER`; an unknown one with `INVALID_DATABASE_VERSION`). A database's version cannot be changed after creation; security updates are applied when it is stopped and started.
 
@@ -321,6 +341,9 @@ await client.apps.files.upload(appId, zip, "app.zip", { message: "fix login" });
 
 // Deploy settings (some options depend on the plan).
 await client.apps.updateConfig(appId, { deploy: { auto_rollback: true, health_check_path: "/health" } });
+
+// Automatic restart on or off, applied right away (no restart, no reinstall).
+await client.apps.updateConfig(appId, { auto_restart: false });
 ```
 
 ### Plans and quotes

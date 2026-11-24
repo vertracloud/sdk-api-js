@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "vitest";
-import { SseIdleTimeoutError, parseSseStream } from "../src/sse.js";
-import { makeClient } from "./helpers.js";
+import { SseIdleTimeoutError, parseLiveMetrics, parseSseStream } from "../src/sse.js";
+import { type CapturedCall, makeClient } from "./helpers.js";
 
 function streamFromString(text: string): ReadableStream<Uint8Array> {
 	const encoder = new TextEncoder();
@@ -89,5 +89,48 @@ describe("apps.realtime — end to end through the client", () => {
 			{ event: "system", data: "Connected to realtime log stream" },
 			{ event: "logs", data: "app started" },
 		]);
+	});
+});
+
+describe("apps.realtime — metrics", () => {
+	const reading = { at: "2026-11-24T12:00:00.000Z", cpu_percent: 12.5, cpu_cores: 0.125, memory_bytes: 1024, memory_limit_bytes: null, net_rx_bps: 1, net_tx_bps: 2, net_rx_bytes: 3, net_tx_bytes: 4 };
+
+	it("sends metrics=true only when asked", async () => {
+		const calls: CapturedCall[] = [];
+		const { client } = makeClient({ sseBody: "event: heartbeat\ndata: heartbeat\n\n" }, calls);
+		await client.apps.realtime("app-1").next();
+		await client.apps.realtime("app-1", { metrics: true }).next();
+		await client.apps.realtime("app-1", { metrics: false }).next();
+		assert.equal(calls[0]?.url.searchParams.has("metrics"), false);
+		assert.equal(calls[1]?.url.searchParams.get("metrics"), "true");
+		assert.equal(calls[2]?.url.searchParams.get("metrics"), "false");
+	});
+
+	it("passes next_logs and metrics events through and parseLiveMetrics reads the reading", async () => {
+		const sseBody = `event: next_logs\ndata: new version up\n\nevent: metrics\ndata: ${JSON.stringify(reading)}\n\n`;
+		const { client } = makeClient({ sseBody });
+		const events = [];
+		for await (const event of client.apps.realtime("app-1", { metrics: true })) events.push(event);
+		assert.equal(events[0]?.event, "next_logs");
+		assert.equal(parseLiveMetrics(events[0] as (typeof events)[number]), null);
+		assert.deepEqual(parseLiveMetrics(events[1] as (typeof events)[number]), reading);
+	});
+
+	it("parseLiveMetrics returns null for other events and for data that is not a reading", () => {
+		assert.equal(parseLiveMetrics({ event: "logs", data: JSON.stringify(reading) }), null);
+		assert.equal(parseLiveMetrics({ event: "metrics", data: "not json" }), null);
+		assert.equal(parseLiveMetrics({ event: "metrics", data: "null" }), null);
+		assert.equal(parseLiveMetrics({ event: "metrics", data: "{}" }), null);
+	});
+});
+
+describe("metrics — restart events", () => {
+	it("apps.metrics and databases.metrics resolve with the events the API sends", async () => {
+		const events = [{ at: "2026-11-24T12:00:00.000Z", kind: "crash", out_of_memory: true }];
+		const { client } = makeClient({ jsonBody: { response: [{ events }] } });
+		const apps = await client.apps.metrics("app-1");
+		const databases = await client.databases.metrics("db-1");
+		assert.deepEqual(apps[0]?.events, events);
+		assert.deepEqual(databases[0]?.events, events);
 	});
 });
