@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.4](https://github.com/vertracloud/sdk-api-js/compare/v0.4.3...v0.4.4) (2026-11-24)
+
+
+### Features
+
+* auto restart, one-time database passwords, live metrics and metric events ([62db299](https://github.com/vertracloud/sdk-api-js/commit/62db299b1011da47108b84bbe527a24ebee1fb52))
+
+
+### Bug Fixes
+
+* **download:** end a stalled download when it is cancelled ([fff057b](https://github.com/vertracloud/sdk-api-js/commit/fff057b1b5c726ff287152062dca711526bf7cc4))
+
 ## [0.4.3](https://github.com/vertracloud/sdk-api-js/compare/v0.4.2...v0.4.3) (2026-11-20)
 
 
