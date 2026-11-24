@@ -255,12 +255,13 @@ export class VertraClient {
 				async pull(out) {
 					const timer = setTimeout(() => controller.abort(new DOMException(`No data received for ${inactivityMs} ms; the download stalled`, "TimeoutError")), inactivityMs);
 					try {
-						const { done, value } = await reader.read();
+						const { done, value } = await readUnlessAborted(reader, controller.signal);
 						if (done) {
 							release();
 							out.close();
 						} else out.enqueue(value);
 					} catch (error) {
+						void reader.cancel(error).catch(() => undefined);
 						release();
 						out.error(controller.signal.aborted ? controller.signal.reason : error);
 					} finally {
@@ -350,4 +351,22 @@ export class VertraClient {
 			throw error;
 		}
 	}
+}
+
+function readUnlessAborted(reader: ReadableStreamDefaultReader<Uint8Array>, signal: AbortSignal): Promise<ReadableStreamReadResult<Uint8Array>> {
+	return new Promise((resolve, reject) => {
+		const fail = () => reject(signal.reason ?? new DOMException("The operation was aborted.", "AbortError"));
+		if (signal.aborted) return fail();
+		signal.addEventListener("abort", fail, { once: true });
+		reader.read().then(
+			(result) => {
+				signal.removeEventListener("abort", fail);
+				resolve(result);
+			},
+			(error) => {
+				signal.removeEventListener("abort", fail);
+				reject(error);
+			},
+		);
+	});
 }

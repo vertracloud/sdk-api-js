@@ -45,7 +45,7 @@ export async function writeStreamToFile(stream: ReadableStream<Uint8Array>, path
 		await rename(temp, path);
 		return { path, bytes };
 	} catch (error) {
-		await reader.cancel(error).catch(() => undefined);
+		void reader.cancel(error).catch(() => undefined);
 		await handle.close().catch(() => undefined);
 		await rm(temp, { force: true });
 		throw error;
