@@ -394,7 +394,7 @@ The SDK follows semantic versioning. Until `1.0.0`, minor releases may contain b
 Issues and pull requests are welcome. Before sending a change, run:
 
 ```bash
-npm run typecheck && npx biome check . && npm test
+pnpm run typecheck && pnpm exec biome check . && pnpm test
 ```
 
 ## License
